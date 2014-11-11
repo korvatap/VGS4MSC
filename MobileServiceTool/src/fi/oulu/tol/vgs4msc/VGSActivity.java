@@ -1,6 +1,6 @@
-package fi.oulu.tol.VGS4MSC;
+package fi.oulu.tol.vgs4msc;
 
-import fi.oulu.tol.VGS4MSC.MainService.VoteServiceBinder;
+import fi.oulu.tol.vgs4msc.MainService.VoteServiceBinder;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;

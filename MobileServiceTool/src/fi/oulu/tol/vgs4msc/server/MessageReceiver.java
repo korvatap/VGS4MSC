@@ -1,4 +1,4 @@
-package fi.oulu.tol.VGS4MSC.server;
+package fi.oulu.tol.vgs4msc.server;
 
 public class MessageReceiver {
 

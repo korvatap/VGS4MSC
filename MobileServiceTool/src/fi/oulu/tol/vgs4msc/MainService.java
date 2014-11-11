@@ -1,4 +1,4 @@
-package fi.oulu.tol.VGS4MSC;
+package fi.oulu.tol.vgs4msc;
 
 import android.app.Service;
 import android.content.Intent;
