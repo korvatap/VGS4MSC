@@ -1,6 +1,6 @@
 package fi.oulu.tol.vgs4msc;
 
-import fi.oulu.tol.vgs4msc.MainService.VoteServiceBinder;
+import fi.oulu.tol.vgs4msc.MainService.MainServiceBinder;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -49,7 +49,7 @@ public class VGSActivity extends Activity{
 	private ServiceConnection mServiceConnection = new ServiceConnection() {
 		   @Override
 		   public void onServiceConnected(ComponentName name, IBinder binder) {
-		      VoteServiceBinder voteBinder = (VoteServiceBinder)binder;
+		      MainServiceBinder voteBinder = (MainServiceBinder)binder;
 		      mMainService = voteBinder.getService();
 		   }
 		   
