@@ -1,0 +1,105 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity" >
+
+    <ImageView
+        android:id="@+id/statusImg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/textView1"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="93dp"
+        android:src="@android:drawable/presence_online" />
+
+    <TextView
+        android:id="@+id/statusTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:text="Server Status:" />
+
+    <TextView
+        android:id="@+id/ipAddressTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/networkTitle"
+        android:layout_marginTop="15dp"
+        android:text="IP Address:" />
+
+    <EditText
+        android:id="@+id/ipAddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@+id/ipAddressTitle"
+        android:layout_toRightOf="@+id/ipAddressTitle"
+        android:ems="10"
+        android:hint="ex. 192.168.0.1" />
+
+    <TextView
+        android:id="@+id/portTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/ipAddress"
+        android:layout_marginTop="16dp"
+        android:text="Port:" />
+
+    <EditText
+        android:id="@+id/port"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/ipAddress"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@+id/portTitle"
+        android:ems="10"
+        android:hint="ex. 27015" >
+
+        <requestFocus />
+    </EditText>
+
+    <Button
+        android:id="@+id/SaveBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/port"
+        android:layout_alignRight="@+id/networkTitle"
+        android:layout_below="@+id/port"
+        android:layout_marginTop="16dp"
+        android:text="Save" />
+
+    <TextView
+        android:id="@+id/networkTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/startServiceBtn"
+        android:layout_marginTop="17dp"
+        android:text="Change network settings below:" />
+
+    <Button
+        android:id="@+id/startServiceBtn"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/statusTitle"
+        android:layout_marginTop="20dp"
+        android:text="Start Service" />
+
+    <Button
+        android:id="@+id/shutdownServiceBtn"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/startServiceBtn"
+        android:layout_alignBottom="@+id/startServiceBtn"
+        android:layout_toRightOf="@+id/statusImg"
+        android:text="Shutdown Service" />
+
+</RelativeLayout>
