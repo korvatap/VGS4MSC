@@ -1,8 +1,11 @@
-package com.example.contentprovidervgs4msc;
+package fi.tol.oulu.vgs4mscsettings;
+
+import fi.tol.oulu.vgs4mscsettings.R;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -10,11 +13,11 @@ import android.widget.EditText;
 
 public class SettingActivity extends Activity {
 	
-    EditText ipAddress = (EditText) findViewById(R.id.ipAddress);
-    EditText port = (EditText) findViewById(R.id.port);
-    Button startService = (Button) findViewById(R.id.startServiceBtn);
-    Button shutdownService = (Button) findViewById(R.id.shutdownServiceBtn);
-    Button saveInfo = (Button) findViewById(R.id.SaveBtn);
+    EditText ipAddress;
+    EditText port;
+    Button startService;
+    Button shutdownService;
+    Button saveInfo;
     
     public static final String SHUTDOWN_SERVICE = "fi.oulu.tol.VGS4MSC.action.SHUTDOWN";
     public static final String START_SERVICE = "fi.oulu.tol.VGS4MSC.action.START";
@@ -24,6 +27,12 @@ public class SettingActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_content);
+        
+        ipAddress = (EditText) findViewById(R.id.ipAddress);
+        port = (EditText) findViewById(R.id.port);
+        startService = (Button) findViewById(R.id.startServiceBtn);
+        shutdownService = (Button) findViewById(R.id.shutdownServiceBtn);
+        saveInfo = (Button) findViewById(R.id.SaveBtn);
   
         shutdownService.setOnClickListener(new OnClickListener() {
             @Override
@@ -51,6 +60,7 @@ public class SettingActivity extends Activity {
             	i.putExtra("IP", ipAddress.getText().toString());
             	i.putExtra("PORT", port.getText().toString());
             	i.setType("text/plain");
+            	Log.d("TESTI", i.getAction());
             	sendBroadcast(i);
             }
         });

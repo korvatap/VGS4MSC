@@ -17,9 +17,7 @@ public class VGSActivity extends Activity{
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		Intent intent = new Intent(this, MainService.class);
-		startService(intent);
-		finish();
+		startService(new Intent(this, MainService.class));
 	}
 	
 	@Override
@@ -30,15 +28,11 @@ public class VGSActivity extends Activity{
 	@Override
 	protected void onStart() {
 		   super.onStart();
-		   Intent intent = new Intent(this, MainService.class);
-		   bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-
 	}
 	
 	@Override
 	protected void onStop() {
 	   super.onStop();
-	   unbindService(mServiceConnection);
 	}
 	
 	@Override

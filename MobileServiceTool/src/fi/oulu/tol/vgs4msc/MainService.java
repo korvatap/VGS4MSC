@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 public class MainService extends Service implements AreaObserver {
 	
@@ -31,6 +32,8 @@ public class MainService extends Service implements AreaObserver {
         @Override
         public void onReceive(Context context, Intent intent) {
         	
+        	Log.d("RECEIVED", intent.getAction());
+        	
         	if(intent.getAction().equals(START_SERVICE)) {
         		//TODO HOW TO START SERVICE
         		
@@ -38,6 +41,7 @@ public class MainService extends Service implements AreaObserver {
         		//TODO HOW TO STOP SERVICE
         		
         	} else if(intent.getAction().equals(NETWORK_INFO)) {
+        		Log.d("RECEIVED", "NETWORKINFO");
         		if(intent.getStringExtra("IP") != null && intent.getStringExtra("PORT") != null) {
         			mIpAddress = intent.getStringExtra("IP");
         			mPort = intent.getStringExtra("PORT");
@@ -66,10 +70,12 @@ public class MainService extends Service implements AreaObserver {
 	
 	@Override
 	public void onCreate() {
+		Log.d("SE", "KAKKA");
+		Toast.makeText(this, "The new Service was Created", Toast.LENGTH_LONG).show();
 		mReceiver = new MyReceiver(this);
 		IntentFilter filter = new IntentFilter();
-        filter.addAction("SHUTDOWN_SERVICE");
-        filter.addAction("START_SERVICE");
+        filter.addAction(SHUTDOWN_SERVICE);
+        filter.addAction(START_SERVICE);
         filter.addAction(NETWORK_INFO);
         registerReceiver(mReceiver, filter);
 		
@@ -77,6 +83,8 @@ public class MainService extends Service implements AreaObserver {
 		gps.setObserver(this);
 		if(gps.canGetLocation()) {
 			Log.d("GPS: ", "Latitude: " + Double.toString(gps.getLatitude()) + " Longitude: " +  Double.toString(gps.getLongitude()));
+		} else {
+			Log.d("GPS: ", "CANNOT BE COMPLETED");
 		}
 	}
 	
