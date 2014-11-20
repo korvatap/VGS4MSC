@@ -21,6 +21,7 @@
 		
                 <activity
 			android:name="fi.oulu.tol.vgs4msc.VGSActivity"
+			android:theme="@android:style/Theme.Translucent.NoTitleBar"
 			android:label="@string/app_name" 
 			android:screenOrientation="portrait">
 			<intent-filter>

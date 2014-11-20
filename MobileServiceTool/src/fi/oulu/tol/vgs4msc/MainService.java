@@ -18,8 +18,6 @@ public class MainService extends Service implements AreaObserver {
 	private CompassSensor mCompass;
 	private GPSTracker mGps;
 	
-	private static final String SHUTDOWN_SERVICE = "fi.oulu.tol.VGS4MSC.action.SHUTDOWN";
-	private static final String START_SERVICE = "fi.oulu.tol.VGS4MSC.action.START";
 	private static final String NETWORK_INFO = "fi.oulu.tol.VGS4MSC.action.NETWORKINFO";
 	public static final String TAG = "fi.oulu.tol.vgs4msc.MainService";
 	
@@ -46,10 +44,8 @@ public class MainService extends Service implements AreaObserver {
 		mGps = new GPSTracker(this);
 		mCompass = new CompassSensor(this);
 		
-		mReceiver = new MyReceiver(this);
+		mReceiver = new MyReceiver();
 		IntentFilter filter = new IntentFilter();
-        filter.addAction(SHUTDOWN_SERVICE);
-        filter.addAction(START_SERVICE);
         filter.addAction(NETWORK_INFO);
         registerReceiver(mReceiver, filter);
 		
@@ -90,33 +86,20 @@ public class MainService extends Service implements AreaObserver {
 	
     public class MyReceiver extends BroadcastReceiver {
     	
-    	private MainService mService;
-
         @Override
         public void onReceive(Context context, Intent intent) {
-        	
-        	Log.d("RECEIVED", intent.getAction());
-        	
-        	if(intent.getAction().equals(START_SERVICE)) {
-        		//TODO HOW TO START SERVICE
-        		
-        	} else if(intent.getAction().equals(SHUTDOWN_SERVICE)) {
-        		//TODO HOW TO STOP SERVICE
-        		
-        	} else if(intent.getAction().equals(NETWORK_INFO)) {
-        		Log.d("RECEIVED", "NETWORKINFO");
-        		if(intent.getStringExtra("IP") != null && intent.getStringExtra("PORT") != null) {
-        			mIpAddress = intent.getStringExtra("IP");
-        			mPort = intent.getStringExtra("PORT");
-        			
-        			//TODO UPDATE NETWORK RECEIVER/SENDER WITH NEW SETTINGS
-        		}
-        	}
+    		Log.d("RECEIVED", "NETWORKINFO");
+    		
+    		if(intent.getStringExtra("IP") != null && intent.getStringExtra("PORT") != null) {
+    			mIpAddress = intent.getStringExtra("IP");
+    			mPort = intent.getStringExtra("PORT");
+    			
+    			//TODO UPDATE NETWORK RECEIVER/SENDER WITH NEW SETTINGS
+    			//Sender.setNetwork(String ip, String port)
+    			//Receiver.setNetwork(String ip, String port)
+    		}
         	
         }
 
-        public MyReceiver(MainService s){
-        	mService = s;
-        }
     }
 }

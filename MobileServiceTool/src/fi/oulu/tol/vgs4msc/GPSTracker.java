@@ -1,21 +1,25 @@
 package fi.oulu.tol.vgs4msc;
 
 import android.content.Context;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 
 final class GPSTracker implements LocationListener {
 	
 	private final Context mContext;
+	public static final String TAG = "fi.oulu.tol.vgs4msc.GPSTracker";
  
     Location mLocation; // location
     double mLatitude; // latitude
     double mLongitude; // longitude
+    private long mLocationTime = 0;
+    private String mCurrentProvider;
     
     // The minimum distance to change Updates in meters
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 1; // 1 meter
@@ -26,8 +30,9 @@ final class GPSTracker implements LocationListener {
     // Declaring a Location Manager
     private LocationManager mLocationManager;
     private boolean mIsGpsEnabled;
-    private boolean mIsNetworkEnabled;
+    private boolean mIsWifiEnabled;
     private boolean mIsRunning;
+    private ConnectivityManager mConMan;
     
     //Observer
     private AreaObserver mObserver;
@@ -36,7 +41,7 @@ final class GPSTracker implements LocationListener {
         this.mContext = context;
         
         mLocationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
-
+        mConMan = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         start();
     }
     
@@ -59,18 +64,16 @@ final class GPSTracker implements LocationListener {
 	}
     
     public double getLatitude(){
-        if(mLocation != null){
-            mLatitude = mLocation.getLatitude();
-        }
         return mLatitude;
     }
      
 
     public double getLongitude(){
-        if(mLocation != null){
-            mLongitude = mLocation.getLongitude();
-        }
         return mLongitude;
+    }
+    
+    public long getLocationTime() {
+    	return mLocationTime;
     }
      
     /**
@@ -78,7 +81,7 @@ final class GPSTracker implements LocationListener {
      * @return boolean
      * */
     public boolean canGetLocation() {
-    	if(!mIsNetworkEnabled && !mIsGpsEnabled) {
+    	if(!mIsWifiEnabled && !mIsGpsEnabled) {
     		return false;
     	} 
         return true;
@@ -88,6 +91,11 @@ final class GPSTracker implements LocationListener {
 	public void onLocationChanged(Location location) {
 		Log.d("GPS Tracker", "onLocationChanged");
 		mLocation = location;
+		
+		mLocationTime = location.getTime();
+		mLatitude = mLocation.getLatitude();
+		mLongitude = mLocation.getLongitude();
+		
 		if(mIsRunning && mObserver != null) {
 			mObserver.newLocation();
 		}
@@ -95,45 +103,57 @@ final class GPSTracker implements LocationListener {
 
 	@Override
 	public void onStatusChanged(String provider, int status, Bundle extras) {
-		boolean isAvailable = (status == LocationProvider.AVAILABLE);
-        if (LocationManager.NETWORK_PROVIDER.equals(provider)) {
-        	mIsNetworkEnabled = isAvailable;
-        } else if (LocationManager.GPS_PROVIDER.equals(provider)) {
-        	mIsGpsEnabled = isAvailable;
-        } else {
-        	Log.d("GPS Tracker", "Location provider is no longer available!");
-        }
+		if(mCurrentProvider.equals(provider) && status != LocationProvider.AVAILABLE) {
+			unregisterForLocationUpdates();
+			registerForLocationUpdates();
+		} else if(provider.equals(LocationManager.NETWORK_PROVIDER)) {
+			if(mCurrentProvider.equals(LocationManager.PASSIVE_PROVIDER)) {
+				unregisterForLocationUpdates();
+				registerForLocationUpdates();
+			}
+		} else if(provider.equals(LocationManager.GPS_PROVIDER)) {
+			if(!mCurrentProvider.equals(LocationManager.GPS_PROVIDER)) {
+				unregisterForLocationUpdates();
+				registerForLocationUpdates();
+			}	
+		}
 	}
 
 	@Override
 	public void onProviderEnabled(String provider) {
-        if (LocationManager.NETWORK_PROVIDER.equals(provider)) {
-        	mIsNetworkEnabled = true;
-        } else if (LocationManager.GPS_PROVIDER.equals(provider)) {
-        	mIsGpsEnabled = true;
-        }
+		// Better provider might have been enabled
+		// Lets re-register location listeners
+		
+		if(provider.equals(LocationManager.GPS_PROVIDER)) {
+			if(!mCurrentProvider.equals(LocationManager.GPS_PROVIDER)) {
+				unregisterForLocationUpdates();
+				registerForLocationUpdates();
+			}
+		} else if (provider.equals(LocationManager.NETWORK_PROVIDER)) {
+			if(mCurrentProvider.equals(LocationManager.PASSIVE_PROVIDER)) {
+				unregisterForLocationUpdates();
+				registerForLocationUpdates();
+			}
+		}
 	}
 
 	@Override
 	public void onProviderDisabled(String provider) {
-		 if (LocationManager.NETWORK_PROVIDER.equals(provider)) {
-			 mIsNetworkEnabled = false;
-	        } else if (LocationManager.GPS_PROVIDER.equals(provider)) {
-	        	mIsGpsEnabled = false;
-	        } else {
-	        	Log.d("GPS Tracker", "Location provider disabled!");
-	        }
+		// if current provider have been disabled
+		// Lets re-register location listeners
+		
+		if(mCurrentProvider.equals(provider)) {
+			unregisterForLocationUpdates();
+			registerForLocationUpdates();
+		}
 	}
 	
 	private void registerForLocationUpdates() {
-		
-        mIsGpsEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        mIsNetworkEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        
-        if(!mIsGpsEnabled && !mIsNetworkEnabled) {
+
+        if(!networkConnected()) {
         	Log.v("GPS Tracker", "GPS NOR NETWORK IS NOT AVAILABLE");
         } else {
-        	if(mIsGpsEnabled) {
+        	if(gpsEnabled()) {
         		try {
         		mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,MIN_TIME_BW_UPDATES,MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
         		} catch (SecurityException e) {
@@ -147,26 +167,70 @@ final class GPSTracker implements LocationListener {
         				mLongitude = mLocation.getLongitude();
         			}
         		}
-        	} else if (mIsNetworkEnabled) {
+        	} else if (wifiEnabled()) {
+        		try {
+        			mLocationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,MIN_TIME_BW_UPDATES,MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+        		} catch (SecurityException e) {
+        			Log.e("GPS Tracker", "Security exception for location updates!!!");
+        		}
+        		Log.d("GPS Tracker", "Wifi Enabled");
+        		if (mLocationManager != null) {
+        			mLocation = mLocationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+        			if(mLocation != null) {
+        				mLatitude = mLocation.getLatitude();
+        				mLongitude = mLocation.getLongitude();
+        			}
+        		}
+        	} else if (mobileEnabled()) {
         		try {
         			mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,MIN_TIME_BW_UPDATES,MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
         		} catch (SecurityException e) {
         			Log.e("GPS Tracker", "Security exception for location updates!!!");
         		}
-        		Log.d("GPS Tracker", "NETWORK Enabled");
+        		Log.d("GPS Tracker", "Mobile Enabled");
         		if (mLocationManager != null) {
-        			mLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        			mLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         			if(mLocation != null) {
         				mLatitude = mLocation.getLatitude();
         				mLongitude = mLocation.getLongitude();
         			}
         		}
         	}
+        	
+        	
         }
 	}
 	
 	private void unregisterForLocationUpdates() {
 		mLocationManager.removeUpdates(this);
+	}
+	
+	private boolean mobileEnabled() {
+		NetworkInfo mobileInfo = mConMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+
+		if(mobileInfo.isConnected()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean wifiEnabled() {
+		NetworkInfo wifiInfo = mConMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+		
+		if(wifiInfo.isConnected()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean gpsEnabled() {
+		return mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+	}
+	
+	private boolean networkConnected() {
+		return (wifiEnabled() || mobileEnabled() || gpsEnabled());
 	}
 
 }
