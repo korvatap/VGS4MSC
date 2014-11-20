@@ -1,6 +1,7 @@
 package fi.oulu.tol.vgs4msc;
 
 import android.content.Context;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -20,21 +21,22 @@ final class GPSTracker implements LocationListener {
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 1; // 1 meter
  
     // The minimum time between updates in milliseconds
-    private static final long MIN_TIME_BW_UPDATES = 1000; // 1 second
+    private static final long MIN_TIME_BW_UPDATES = 0; // 1 second
  
     // Declaring a Location Manager
-    protected LocationManager mLocationManager;
+    private LocationManager mLocationManager;
     private boolean mIsGpsEnabled;
+    private boolean mIsNetworkEnabled;
     private boolean mIsRunning;
-    private boolean mIsNetworkProviderAvailable;
-    private boolean mIsGpsProviderAvailable;
     
     //Observer
     private AreaObserver mObserver;
     
     public GPSTracker(Context context) {
         this.mContext = context;
+        
         mLocationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+
         start();
     }
     
@@ -76,25 +78,17 @@ final class GPSTracker implements LocationListener {
      * @return boolean
      * */
     public boolean canGetLocation() {
-    	if(!mIsNetworkProviderAvailable && !mIsGpsProviderAvailable) {
+    	if(!mIsNetworkEnabled && !mIsGpsEnabled) {
     		return false;
     	} 
         return true;
     }
-     
-    public void setEnableGps(boolean enable) {
-    	if(mIsGpsEnabled != enable) {
-    		mIsGpsEnabled = enable;
-    		if(mIsRunning) {
-    			unregisterForLocationUpdates();
-    			registerForLocationUpdates();
-    		}
-    	}
-    }
 
 	@Override
 	public void onLocationChanged(Location location) {
-		if(mIsRunning) {
+		Log.d("GPS Tracker", "onLocationChanged");
+		mLocation = location;
+		if(mIsRunning && mObserver != null) {
 			mObserver.newLocation();
 		}
 	}
@@ -103,9 +97,9 @@ final class GPSTracker implements LocationListener {
 	public void onStatusChanged(String provider, int status, Bundle extras) {
 		boolean isAvailable = (status == LocationProvider.AVAILABLE);
         if (LocationManager.NETWORK_PROVIDER.equals(provider)) {
-            mIsNetworkProviderAvailable = isAvailable;
+        	mIsNetworkEnabled = isAvailable;
         } else if (LocationManager.GPS_PROVIDER.equals(provider)) {
-            mIsGpsProviderAvailable = isAvailable;
+        	mIsGpsEnabled = isAvailable;
         } else {
         	Log.d("GPS Tracker", "Location provider is no longer available!");
         }
@@ -114,34 +108,61 @@ final class GPSTracker implements LocationListener {
 	@Override
 	public void onProviderEnabled(String provider) {
         if (LocationManager.NETWORK_PROVIDER.equals(provider)) {
-            mIsNetworkProviderAvailable = true;
+        	mIsNetworkEnabled = true;
         } else if (LocationManager.GPS_PROVIDER.equals(provider)) {
-            mIsGpsProviderAvailable = true;
+        	mIsGpsEnabled = true;
         }
 	}
 
 	@Override
 	public void onProviderDisabled(String provider) {
 		 if (LocationManager.NETWORK_PROVIDER.equals(provider)) {
-	            mIsNetworkProviderAvailable = false;
+			 mIsNetworkEnabled = false;
 	        } else if (LocationManager.GPS_PROVIDER.equals(provider)) {
-	            mIsGpsProviderAvailable = false;
+	        	mIsGpsEnabled = false;
 	        } else {
 	        	Log.d("GPS Tracker", "Location provider disabled!");
 	        }
 	}
 	
 	private void registerForLocationUpdates() {
-		try {
-			mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
-			mIsNetworkProviderAvailable = true;
-			if(mIsGpsEnabled) {
-				mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
-				mIsGpsProviderAvailable = true;
-			}
-		} catch (SecurityException e) {
-			Log.e("GPS Tracker", "Security exception for location updates!!!");
-		}
+		
+        mIsGpsEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        mIsNetworkEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        
+        if(!mIsGpsEnabled && !mIsNetworkEnabled) {
+        	Log.v("GPS Tracker", "GPS NOR NETWORK IS NOT AVAILABLE");
+        } else {
+        	if(mIsGpsEnabled) {
+        		try {
+        		mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,MIN_TIME_BW_UPDATES,MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+        		} catch (SecurityException e) {
+        			Log.e("GPS Tracker", "Security exception for location updates!!!");
+        		}
+        		Log.d("GPS Tracker", "GPS Enabled");
+        		if (mLocationManager != null) {
+        			mLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        			if(mLocation != null) {
+        				mLatitude = mLocation.getLatitude();
+        				mLongitude = mLocation.getLongitude();
+        			}
+        		}
+        	} else if (mIsNetworkEnabled) {
+        		try {
+        			mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,MIN_TIME_BW_UPDATES,MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+        		} catch (SecurityException e) {
+        			Log.e("GPS Tracker", "Security exception for location updates!!!");
+        		}
+        		Log.d("GPS Tracker", "NETWORK Enabled");
+        		if (mLocationManager != null) {
+        			mLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        			if(mLocation != null) {
+        				mLatitude = mLocation.getLatitude();
+        				mLongitude = mLocation.getLongitude();
+        			}
+        		}
+        	}
+        }
 	}
 	
 	private void unregisterForLocationUpdates() {

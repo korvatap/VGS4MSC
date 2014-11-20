@@ -1,42 +1,56 @@
 package fi.oulu.tol.vgs4msc;
 
 import fi.oulu.tol.vgs4msc.MainService.MainServiceBinder;
+import fi.tol.oulu.vgs4msc.R;
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
+import android.view.WindowManager;
 
 public class VGSActivity extends Activity{
 	
 	private MainService mMainService;
+	
+	public static final String TAG = "fi.oulu.tol.vgs4msc.VGSActivity";
 
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.vgs4activity_layout);
 		
-		startService(new Intent(this, MainService.class));
+		Intent intent = new Intent(this, MainService.class);
+		startService(intent);
+		
+		Log.d("ACTIVITY", "STARTSERVICE CALLED" + intent.getClass());
 	}
 	
 	@Override
-	protected void onResume() {
+	public void onResume() {
 		super.onResume();
 	}
 	
 	@Override
-	protected void onStart() {
+	public void onStart() {
 		   super.onStart();
 	}
 	
 	@Override
-	protected void onStop() {
+    public void onDestroy()
+    {
+        super.onDestroy();
+    }
+	
+	@Override
+	public void onStop() {
 	   super.onStop();
 	}
 	
 	@Override
-	protected void onPause() {
+	public void onPause() {
 		super.onPause();
 	}
 	
