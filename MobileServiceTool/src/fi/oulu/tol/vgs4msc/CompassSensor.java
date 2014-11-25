@@ -48,8 +48,6 @@ public class CompassSensor implements SensorEventListener {
 		matrixI = new float[9];
 		matrixValues = new float[3];
 		
-		registerListeners();
-		
 		IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         mReceiver = new ScreenReceiver();
@@ -95,6 +93,14 @@ public class CompassSensor implements SensorEventListener {
 	
 	public void setObserver(AreaObserver obs) {
 		mObserver = obs;
+	}
+	
+	public void stop() {
+		unregisterListeners();
+	}
+	
+	public void start() {
+		registerListeners();
 	}
 	
 	public AreaObserver getObserver(AreaObserver obs) {

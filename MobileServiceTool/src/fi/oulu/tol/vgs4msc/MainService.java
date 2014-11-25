@@ -1,5 +1,6 @@
 package fi.oulu.tol.vgs4msc;
 
+import fi.oulu.tol.vgs4msc.handlers.MSGHandler;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -7,16 +8,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
 import android.util.Log;
-import android.widget.Toast;
 
 public class MainService extends Service implements AreaObserver {
 	
 	private final MainServiceBinder binder = new MainServiceBinder();
 	private CompassSensor mCompass;
 	private GPSTracker mGps;
+	private MSGHandler mMsgHandler;
 	
 	private static final String NETWORK_INFO = "fi.oulu.tol.VGS4MSC.action.NETWORKINFO";
 	public static final String TAG = "fi.oulu.tol.vgs4msc.MainService";
@@ -40,10 +39,12 @@ public class MainService extends Service implements AreaObserver {
 	
 	@Override
 	public void onCreate() {
+		mMsgHandler = new MSGHandler(this);
+		
 		//Give context info to GPS & Compass
 		mGps = new GPSTracker(this);
 		mCompass = new CompassSensor(this);
-		
+
 		mReceiver = new MyReceiver();
 		IntentFilter filter = new IntentFilter();
         filter.addAction(NETWORK_INFO);
@@ -51,6 +52,10 @@ public class MainService extends Service implements AreaObserver {
 		
 		mGps.setObserver(this);
 		mCompass.setObserver(this);
+		
+		mMsgHandler.startServer();
+		mGps.start();
+		mCompass.start();
 		
 		if(mGps.canGetLocation()) {
 			Log.d("GPS: ", "Latitude: " + Double.toString(mGps.getLatitude()) + " Longitude: " +  Double.toString(mGps.getLongitude()));
@@ -71,7 +76,9 @@ public class MainService extends Service implements AreaObserver {
 	@Override
 	public void onDestroy() {
 		Log.d("SERVICE", "SAMMUTETTU");
+		mCompass.stop();
 		mGps.stop();
+		mMsgHandler.closeServer();
 	}
 
 	@Override
@@ -102,4 +109,5 @@ public class MainService extends Service implements AreaObserver {
         }
 
     }
+
 }

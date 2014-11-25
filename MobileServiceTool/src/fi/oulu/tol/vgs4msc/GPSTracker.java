@@ -42,7 +42,6 @@ final class GPSTracker implements LocationListener {
         
         mLocationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
         mConMan = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        start();
     }
     
     public void start() {

@@ -1,22 +1,131 @@
 package fi.oulu.tol.vgs4msc.handlers;
 
-import java.util.List;
+import java.util.Vector;
+
+import android.content.Context;
 
 import fi.oulu.tol.vgs4msc.server.MessageReceiver;
 import fi.oulu.tol.vgs4msc.server.MessageSender;
+import fi.oulu.tol.vgs4msc.server.MessageServerObserver;
 
-public class MSGHandler implements MessageObserver{
+public class MSGHandler implements MessageServerObserver {
 	private MessageReceiver mMessageReceiver;
 	private MessageSender mMessageSender;
-	private List<String> mMsgList;
+	private Vector<String> mMsgList;
+	private Context mContext;
 	
-	public void sendMessage(String msg) {
-		mMessageSender.sendMessage(msg);
+	public MSGHandler(Context context) {
+		mContext = context;
+	}
+	
+	public void initialize() {
+		mMessageReceiver = new MessageReceiver();
+		mMessageSender = new MessageSender();
+		
+		mMessageReceiver.initialize(mContext, this);
+		mMessageSender.initialize(mContext, this);
+	}
+	
+	public void startServer() {
+		mMessageReceiver.start();
+	}
+	
+	public void closeServer() {
+		mMessageReceiver.kill();
+	}
+	
+	public void setReceiver(MessageReceiver mr) {
+		mMessageReceiver = mr;
+	}
+	
+	public void setSender(MessageSender ms) {
+		mMessageSender = ms;
+	}
+	
+	public void sendMessage(String msg, String type) {
+		mMessageSender.sendMessage(msg, type);
 	}
 
 	@Override
-	public void newMessages() {
-		mMsgList = mMessageReceiver.getMessages();
+	public void messageReceived() {
+		while(mMessageReceiver.hasMessages()) {
+			mMsgList.add(mMessageReceiver.getLastMessage());
+		}
+		processMessages();
+	}
+	
+	
+	private void processMessages() {
+		String tmp;
+		String tmpTokens[];
+		int tmpType;
+		while(hasMessages()) {
+			tmp = getLastMessage();
+			if (tmp != null) {
+				tmpTokens = tmp.split(",");
+				tmpType = Character.getNumericValue(tmpTokens[1].charAt(0));
+				
+				switch(tmpType) {
+					case 1:
+						break;
+					case 2:
+						break;
+					case 3:
+						break;
+				}
+			}
+		}
 		
+	}
+	
+	public String getLastMessage() {
+		String tmp = null;
+		if (!mMsgList.isEmpty()) {
+			tmp = mMsgList.get(0);
+		}
+		if (null != tmp) {
+			mMsgList.remove(0);
+			return tmp;
+		} else {
+			return null;
+		}
+	}
+
+	public void messageToSend(String type, String message) {
+		mMessageSender.sendMessage(type, message);
+	}
+
+	@Override
+	public void messageSend() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void errorNotification(String error) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void handshake() {
+		mMessageSender.handshake();
+	}
+
+	@Override
+	public void handshakeReceived() {
+		String msg = mMessageReceiver.getHandshakeMessage();
+		String tokens[] = msg.split(",");
+		
+		mMessageReceiver.setServerUUID(tokens[0]);
+		mMessageSender.setServerUUID(tokens[0]);
+		
+	}
+	
+	public boolean hasMessages() {
+		if(!mMsgList.isEmpty()) {
+			return true;
+		}
+		return false;
 	}
 }
