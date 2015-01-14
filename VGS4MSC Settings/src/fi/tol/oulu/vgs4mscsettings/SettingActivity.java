@@ -1,6 +1,5 @@
 package fi.tol.oulu.vgs4mscsettings;
 
-import fi.tol.oulu.vgs4mscsettings.R;
 
 import android.app.Activity;
 import android.content.Intent;
