@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -16,14 +17,15 @@ public class MainService extends Service implements AreaObserver {
 	private CompassSensor mCompass;
 	private GPSTracker mGps;
 	private MSGHandler mMsgHandler;
+	private MyReceiver mReceiver;
 	
+	private static final String SHUTDOWN_SERVICE = "fi.oulu.tol.VGS4MSC.action.SHUTDOWN";
+	private static final String START_SERVICE = "fi.oulu.tol.VGS4MSC.action.START";
 	private static final String NETWORK_INFO = "fi.oulu.tol.VGS4MSC.action.NETWORKINFO";
 	public static final String TAG = "fi.oulu.tol.vgs4msc.MainService";
 	
 	private String mIpAddress = "127.0.0.1";
 	private String mPort = "27015";
-	
-	BroadcastReceiver mReceiver;
 
 	public class MainServiceBinder extends Binder {
 		MainService getService() {
@@ -39,20 +41,24 @@ public class MainService extends Service implements AreaObserver {
 	
 	@Override
 	public void onCreate() {
+		
+		mReceiver = new MyReceiver();
+		IntentFilter filter = new IntentFilter();
+        filter.addAction(START_SERVICE);
+        filter.addAction(SHUTDOWN_SERVICE);
+        filter.addAction(NETWORK_INFO);
+        registerReceiver(mReceiver, filter);	
+		
 		mMsgHandler = new MSGHandler(this);
 		
 		//Give context info to GPS & Compass
 		mGps = new GPSTracker(this);
 		mCompass = new CompassSensor(this);
-
-		mReceiver = new MyReceiver();
-		IntentFilter filter = new IntentFilter();
-        filter.addAction(NETWORK_INFO);
-        registerReceiver(mReceiver, filter);
 		
 		mGps.setObserver(this);
 		mCompass.setObserver(this);
 		
+		mMsgHandler.initialize();
 		mMsgHandler.startServer();
 		mGps.start();
 		mCompass.start();
@@ -76,6 +82,7 @@ public class MainService extends Service implements AreaObserver {
 	@Override
 	public void onDestroy() {
 		Log.d("SERVICE", "SAMMUTETTU");
+		unregisterReceiver(mReceiver);
 		mCompass.stop();
 		mGps.stop();
 		mMsgHandler.closeServer();
@@ -83,7 +90,7 @@ public class MainService extends Service implements AreaObserver {
 
 	@Override
 	public void newDegree() {
-		Log.d("DEGREES: ", Float.toString(mCompass.getDegrees()));
+		//Log.d("DEGREES: ", Float.toString(mCompass.getDegrees()));
 	}
 	
 	@Override
@@ -91,23 +98,30 @@ public class MainService extends Service implements AreaObserver {
 		Log.d("GPSN: ", "Latitude: " + Double.toString(mGps.getLatitude()) + " Longitude: " +  Double.toString(mGps.getLongitude()));
 	}
 	
-    public class MyReceiver extends BroadcastReceiver {
-    	
+	private class MyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-    		Log.d("RECEIVED", "NETWORKINFO");
-    		
-    		if(intent.getStringExtra("IP") != null && intent.getStringExtra("PORT") != null) {
-    			mIpAddress = intent.getStringExtra("IP");
-    			mPort = intent.getStringExtra("PORT");
-    			
-    			//TODO UPDATE NETWORK RECEIVER/SENDER WITH NEW SETTINGS
-    			//Sender.setNetwork(String ip, String port)
-    			//Receiver.setNetwork(String ip, String port)
-    		}
-        	
+	        	
+        	Log.d("RECEIVED", intent.getAction());
+	        	
+        	if(intent.getAction().equals(SHUTDOWN_SERVICE)) {
+        		stopSelf();
+        	} else if(intent.getAction().equals(NETWORK_INFO)) {
+        		Log.d("RECEIVED", "NETWORKINFO");
+        		Bundle extras = intent.getExtras();
+        		if(extras != null) {
+        			if(extras.containsKey("IP")) {
+        				mIpAddress = extras.get("IP").toString();
+        			}
+        			if(extras.containsKey("PORT")) {
+        				mPort = extras.get("PORT").toString();
+        			}
+        			Log.d(TAG, mIpAddress + " " + mPort);
+					mMsgHandler.setNetwork(mIpAddress, mPort);
+        		}
+        	}
         }
 
     }
-
+	
 }

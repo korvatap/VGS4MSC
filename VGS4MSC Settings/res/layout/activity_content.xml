@@ -5,23 +5,6 @@
     android:orientation="vertical"
     tools:context=".MainActivity" >
 
-    <ImageView
-        android:id="@+id/statusImg"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/textView1"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="93dp"
-        android:src="@android:drawable/presence_online" />
-
-    <TextView
-        android:id="@+id/statusTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:text="Server Status:" />
-
     <TextView
         android:id="@+id/ipAddressTitle"
         android:layout_width="wrap_content"
@@ -78,28 +61,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/startServiceBtn"
-        android:layout_marginTop="17dp"
+        android:layout_below="@+id/shutdownServiceBtn"
+        android:layout_marginTop="33dp"
         android:text="Change network settings below:" />
-
-    <Button
-        android:id="@+id/startServiceBtn"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/statusTitle"
-        android:layout_marginTop="20dp"
-        android:text="Start Service" />
 
     <Button
         android:id="@+id/shutdownServiceBtn"
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/startServiceBtn"
-        android:layout_alignBottom="@+id/startServiceBtn"
-        android:layout_toRightOf="@+id/statusImg"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="19dp"
         android:text="Shutdown Service" />
 
 </RelativeLayout>

@@ -97,6 +97,7 @@ public class CompassSensor implements SensorEventListener {
 	
 	public void stop() {
 		unregisterListeners();
+		mContext.unregisterReceiver(mReceiver);
 	}
 	
 	public void start() {

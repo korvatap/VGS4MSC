@@ -1,7 +1,9 @@
 package fi.oulu.tol.vgs4msc.server;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.util.List;
 import java.util.UUID;
 import java.util.Vector;
@@ -17,7 +19,7 @@ public class MessageReceiver extends Thread {
 	private static final String TAG = "fi.oulu.tol.vgs4msc.messagereceiver";
 	private boolean bKeepRunning = true;
 	private List <String> mMsgList;
-	private String serverPort;
+	private String serverPort = "27015";
 	private MessageServerObserver proxyObserver= null;
 	private Context mContext;
 	private UUID serverUUID = null;
@@ -96,9 +98,13 @@ public class MessageReceiver extends Thread {
                     	}
                     }
                 }
-            } catch (Throwable e) {
-                Log.d(TAG, "UDP server error" + e.getStackTrace().toString());
+            } catch (SocketException  e) {
+                Log.d(TAG, "UDP SocketException error",e);
             }
+        	
+        	catch (IOException d) {
+        		Log.d(TAG, "UDP IOException error" + d.getStackTrace().toString());
+        	}
 
             if (socket != null) {
                 socket.close();

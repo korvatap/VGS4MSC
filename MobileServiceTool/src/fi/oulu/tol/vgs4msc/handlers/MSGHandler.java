@@ -3,6 +3,7 @@ package fi.oulu.tol.vgs4msc.handlers;
 import java.util.Vector;
 
 import android.content.Context;
+import android.util.Log;
 
 import fi.oulu.tol.vgs4msc.server.MessageReceiver;
 import fi.oulu.tol.vgs4msc.server.MessageSender;
@@ -127,5 +128,20 @@ public class MSGHandler implements MessageServerObserver {
 			return true;
 		}
 		return false;
+	}
+
+	public void setNetwork(String mIpAddress, String mPort) {
+		Log.d("TESTING", mIpAddress + mPort);
+		mMessageSender.setServerAddress(mIpAddress);
+		mMessageSender.setServerPort(mPort);
+		
+		newPort(mPort);
+	}
+	
+	public void newPort(String port) {
+		mMessageReceiver = new MessageReceiver();
+		mMessageReceiver.initialize(mContext, this);
+		mMessageReceiver.setPort(port);
+		startServer();
 	}
 }

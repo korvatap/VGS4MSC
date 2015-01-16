@@ -29,7 +29,6 @@ public class SettingActivity extends Activity {
         
         ipAddress = (EditText) findViewById(R.id.ipAddress);
         port = (EditText) findViewById(R.id.port);
-        startService = (Button) findViewById(R.id.startServiceBtn);
         shutdownService = (Button) findViewById(R.id.shutdownServiceBtn);
         saveInfo = (Button) findViewById(R.id.SaveBtn);
   
@@ -42,15 +41,6 @@ public class SettingActivity extends Activity {
             }
         });
         
-        startService.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                Intent i = new Intent();
-                i.setAction(START_SERVICE);
-                sendBroadcast(i);
-            }
-        });
-        
         saveInfo.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View arg0) {
@@ -58,7 +48,7 @@ public class SettingActivity extends Activity {
             	i.setAction(NETWORK_INFO);
             	i.putExtra("IP", ipAddress.getText().toString());
             	i.putExtra("PORT", port.getText().toString());
-            	i.setType("text/plain");
+            	//i.setType("text/plain");
             	Log.d("TESTI", i.getAction());
             	sendBroadcast(i);
             }
