@@ -25,7 +25,7 @@ public class MessageReceiver extends Thread {
 	private UUID serverUUID = null;
 	private String hsMessage;
 	
-	public void initialize(Context c, MessageServerObserver obs) {
+	public MessageReceiver(Context c, MessageServerObserver obs) {
 		mContext = c;
 		proxyObserver = obs;
 		mMsgList = new Vector<String>();

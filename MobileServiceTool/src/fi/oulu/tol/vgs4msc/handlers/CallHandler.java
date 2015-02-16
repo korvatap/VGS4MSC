@@ -1,9 +1,7 @@
 package fi.oulu.tol.vgs4msc.handlers;
 
-import java.util.TimerTask;
-
+import java.util.List;
 import org.linphone.core.LinphoneAddress;
-import org.linphone.core.LinphoneAuthInfo;
 import org.linphone.core.LinphoneCall;
 import org.linphone.core.LinphoneCall.State;
 import org.linphone.core.LinphoneCallStats;
@@ -28,9 +26,6 @@ import org.linphone.mediastream.video.capture.hwconf.AndroidCameraConfiguration;
 import org.linphone.mediastream.video.capture.hwconf.AndroidCameraConfiguration.AndroidCamera;
 
 import android.content.Context;
-import android.hardware.Camera;
-import android.hardware.Camera.CameraInfo;
-import android.hardware.camera2.CameraDevice;
 import android.util.Log;
 
 public class CallHandler implements LinphoneCoreListener {
@@ -39,46 +34,31 @@ public class CallHandler implements LinphoneCoreListener {
 	private LinphoneCore mLc;
 	private Context mContext;
 	private static final String TAG = "fi.oulu.tol.vgs4msc.handlers.callhandler";
-	private String allowedContact;
-	private int currentCameraId;
+	private List<String> allowedContacts;
 	
 	public CallHandler(Context context) {
 		mContext = context;
+		allowedContacts.add("sip:xperia123@sip.linphone.org");
+		allowedContacts.add("sip:korvatap@sip.linphone.org");
 	}
 	
-	public void setAllowedContact(String c) {
-		allowedContact = c;
+	public void addAllowedContact(String c) {
+		allowedContacts.add(c);
 	}
 	
-	public String getAllowedContact() {
-		return allowedContact;
-	}
-	
-	public boolean videoEnabled() {
-		if(mLc != null && mLc.isVideoEnabled()) {
-			return true;
-		}
-		return false;
-	}
-	
-	public void enableVideo() {
-		if(mLc != null && !mLc.isVideoEnabled()) {
-			mLc.enableVideo(true, true);
-		}
-	}
-	
-	public void setVideoCaptureToGlasses() {
-		//TODO mLc.setVideoDevice(int id)
-		//currentCameraId = mLc.getVideoDevice();
-		//AndroidCamera[] cameras = AndroidCameraConfiguration.retrieveCameras();
-		
-		//mLc.setVideoDevice(cameras.length);
+	public List<String> getAllowedContacts() {
+		return allowedContacts;
 	}
 	
 	public void start() {
+	        AndroidCamera[] currentCameras = AndroidCameraConfiguration.retrieveCameras();
 		try {
 			try {
 				mLc = LinphoneCoreFactory.instance().createLinphoneCore(this, mContext);
+				mLc.setVideoDevice(currentCameras[currentCameras.length].id);
+				if(mLc != null && !mLc.isVideoEnabled()) {
+		                        mLc.enableVideo(true, true);
+		                }
 			} catch (LinphoneCoreException e) {
 				Log.e(TAG, "no config ready yet: " + e.getStackTrace().toString());
 			}
@@ -107,13 +87,25 @@ public class CallHandler implements LinphoneCoreListener {
 	@Override
 	public void callState(LinphoneCore lc, LinphoneCall call, State cstate, String message) {
 
-		if(cstate == State.IncomingReceived && !call.equals(lc.getCurrentCall()) && allowedContact.equals(call.getRemoteContact())) {
-			Log.i(TAG, "new state: " + cstate.toString());
-			try {
-				lc.acceptCall(call);
-			} catch (LinphoneCoreException e) {
-				Log.e(TAG, "Failed to accept call. " + e.getStackTrace().toString());
+		boolean badCaller = true;
+		
+		if(cstate == State.IncomingReceived && !call.equals(lc.getCurrentCall())) {
+			
+			for(String contact : allowedContacts) {
+				if (contact.equals(call.getRemoteContact())) {
+					badCaller = false;
+					break;
+				}
 			}
+			if (!badCaller) {
+				Log.i(TAG, "new state: " + cstate.toString());
+				try {
+					lc.acceptCall(call);
+				} catch (LinphoneCoreException e) {
+					Log.e(TAG, "Failed to accept call. " + e.getStackTrace().toString());
+				}
+			}
+
 		} else if (cstate == State.CallEnd) {
 			running = false;
 			mLc.terminateCall(call);
@@ -185,7 +177,7 @@ public class CallHandler implements LinphoneCoreListener {
 	public void displayStatus(LinphoneCore lc, String message) {}
 
 	@Override
-	public void displayMessage(LinphoneCore lc, String message) {	}
+	public void displayMessage(LinphoneCore lc, String message) {}
 
 	@Override
 	public void displayWarning(LinphoneCore lc, String message) {}

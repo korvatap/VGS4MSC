@@ -23,9 +23,8 @@ public class MessageSender {
 		private MessageServerObserver proxyObserver= null;
 		private Context mContext = null;
 		private static final String TAG = "MessageServerProxy";
-
-		 
-		public void initialize(Context c, MessageServerObserver obs) {
+		
+		public MessageSender(Context c, MessageServerObserver obs) {
 			mContext = c;
 			proxyObserver = obs;
 		}

@@ -2,9 +2,9 @@ package fi.oulu.tol.vgs4msc.handlers;
 
 import java.util.Vector;
 
+import uni.oulu.firstprotocol.FirstprotocolMainActivity;
 import android.content.Context;
 import android.util.Log;
-
 import fi.oulu.tol.vgs4msc.server.MessageReceiver;
 import fi.oulu.tol.vgs4msc.server.MessageSender;
 import fi.oulu.tol.vgs4msc.server.MessageServerObserver;
@@ -14,17 +14,14 @@ public class MSGHandler implements MessageServerObserver {
 	private MessageSender mMessageSender;
 	private Vector<String> mMsgList;
 	private Context mContext;
+	private FirstprotocolMainActivity mLedService;
 	
 	public MSGHandler(Context context) {
 		mContext = context;
-	}
-	
-	public void initialize() {
-		mMessageReceiver = new MessageReceiver();
-		mMessageSender = new MessageSender();
-		
-		mMessageReceiver.initialize(mContext, this);
-		mMessageSender.initialize(mContext, this);
+		mMessageReceiver = new MessageReceiver(mContext, this);
+		mMessageSender = new MessageSender(mContext, this);
+		mLedService = new FirstprotocolMainActivity(mContext);
+		mLedService.start();
 	}
 	
 	public void startServer() {
@@ -33,6 +30,10 @@ public class MSGHandler implements MessageServerObserver {
 	
 	public void closeServer() {
 		mMessageReceiver.kill();
+	}
+	
+	public void closeLedService() {
+	        mLedService.stop();
 	}
 	
 	public void setReceiver(MessageReceiver mr) {
@@ -72,6 +73,11 @@ public class MSGHandler implements MessageServerObserver {
 					case 2:
 						break;
 					case 3:
+					        if(!mLedService.started()) {
+					                mLedService.resume();
+					        }
+					        // PARSE VALUE FROM MESSAGE
+					        //mLedService.sendDirections(lValues, bright, blkTime, freq);
 						break;
 				}
 			}
@@ -139,9 +145,11 @@ public class MSGHandler implements MessageServerObserver {
 	}
 	
 	public void newPort(String port) {
-		mMessageReceiver = new MessageReceiver();
-		mMessageReceiver.initialize(mContext, this);
-		mMessageReceiver.setPort(port);
-		startServer();
+		if(mContext != null) {
+			mMessageReceiver = new MessageReceiver(mContext, this);
+			mMessageReceiver.setPort(port);
+			startServer();
+		}
+
 	}
 }

@@ -12,9 +12,9 @@ import android.util.Log;
 
 final class GPSTracker implements LocationListener {
 	
-	private final Context mContext;
-	public static final String TAG = "fi.oulu.tol.vgs4msc.GPSTracker";
- 
+    private final Context mContext;
+    public static final String TAG = "fi.oulu.tol.vgs4msc.GPSTracker";
+         
     Location mLocation; // location
     double mLatitude; // latitude
     double mLongitude; // longitude
@@ -25,7 +25,7 @@ final class GPSTracker implements LocationListener {
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 1; // 1 meter
  
     // The minimum time between updates in milliseconds
-    private static final long MIN_TIME_BW_UPDATES = 0; // 1 second
+    private static final long MIN_TIME_BW_UPDATES = 1; // 1 second
  
     // Declaring a Location Manager
     private LocationManager mLocationManager;

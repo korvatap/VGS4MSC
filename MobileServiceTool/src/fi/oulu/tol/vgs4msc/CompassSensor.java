@@ -23,6 +23,11 @@ public class CompassSensor implements SensorEventListener {
 	private Sensor mSensorAccelerometer;
 	private Sensor mSensorMagneticField;
 	
+	private long lastTimeStamp = 0;
+	private float lastDegrees = 0;
+	private boolean firstTime = true;
+	private int minDifferenceValue = 4;
+	
 	private float[] mValuesAccelerometer;
 	private float[] mValuesMagneticField;
 	
@@ -49,41 +54,59 @@ public class CompassSensor implements SensorEventListener {
 		matrixValues = new float[3];
 		
 		IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        mReceiver = new ScreenReceiver();
-        mContext.registerReceiver(mReceiver, filter);
+                filter.addAction(Intent.ACTION_SCREEN_OFF);
+                mReceiver = new ScreenReceiver();
+                mContext.registerReceiver(mReceiver, filter);
 	}
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
-		switch(event.sensor.getType()){
-		  case Sensor.TYPE_ACCELEROMETER:
-		   for(int i =0; i < 3; i++){
-		    mValuesAccelerometer[i] = event.values[i];
-		   }
-		   break;
-		  case Sensor.TYPE_MAGNETIC_FIELD:
-		   for(int i =0; i < 3; i++){
-		    mValuesMagneticField[i] = event.values[i];
-		   }
-		   break;
-		  }
-		    
-		  boolean success = SensorManager.getRotationMatrix(matrixR, matrixI, mValuesAccelerometer, mValuesMagneticField);
-		    
-		  if(success){
-			  SensorManager.getOrientation(matrixR, matrixValues);
-			  
-			  
-			  float azimuthInRadians = matrixValues[0];
-			  float azimuthInDegress = (float)Math.toDegrees(azimuthInRadians);
-			  if (azimuthInDegress < 0.0f) {
-			      azimuthInDegress += 360.0f;
-			  }
-			   
-			  mDegrees = azimuthInDegress;
-			  mObserver.newDegree();
-		  }
+	        if((System.currentTimeMillis()-lastTimeStamp) > 3000 || firstTime) {
+	                switch(event.sensor.getType()){
+                        case Sensor.TYPE_ACCELEROMETER:
+                           for(int i =0; i < 3; i++){
+                                   mValuesAccelerometer[i] = event.values[i];
+                           }
+                        break;
+                        case Sensor.TYPE_MAGNETIC_FIELD:
+                                for(int i =0; i < 3; i++){
+                                        mValuesMagneticField[i] = event.values[i];
+                                }
+                        break;
+                  }
+                    
+                  boolean success = SensorManager.getRotationMatrix(matrixR, matrixI, mValuesAccelerometer, mValuesMagneticField);
+                    
+                  if(success){
+                          SensorManager.getOrientation(matrixR, matrixValues);
+                          
+                          
+                          float azimuthInRadians = matrixValues[0];
+                          float azimuthInDegress = (float)Math.toDegrees(azimuthInRadians);
+                          if (azimuthInDegress < 0.0f) {
+                                  azimuthInDegress += 360.0f;
+                          }
+                          
+                          if(azimuthInDegress > (lastDegrees+minDifferenceValue) || azimuthInDegress < (lastDegrees-minDifferenceValue)) {
+                                  lastDegrees = mDegrees;
+                                  mDegrees = azimuthInDegress;
+                                  lastTimeStamp = System.currentTimeMillis();
+                                  if(mObserver != null){
+                                          mObserver.newDegree(); 
+                                  }
+                          } else if (firstTime) {
+                                  lastDegrees = azimuthInDegress;
+                                  mDegrees = azimuthInDegress;
+                                  firstTime = false;
+                                  lastTimeStamp = System.currentTimeMillis();
+                                  
+                                  if(mObserver != null){
+                                          mObserver.newDegree(); 
+                                  }
+                          }
+                         
+                  }
+	        }
 	}
 
 	@Override
