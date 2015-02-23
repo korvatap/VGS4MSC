@@ -90,14 +90,19 @@ public class MainService extends Service implements AreaObserver, ConnectionObse
 	public void newDegree() {
 	        //mMsgHandler.sendMessage(UUID, GPS&DEGREES, VALUES)
 		Log.d("DEGREES: ", Float.toString(mCompass.getDegrees()));
-		mMsgHandler.sendMessage(LOCATION, mCompass.getDegrees() + ";" + mGps.getLatitude());
+		mMsgHandler.sendMessage(Double.toString(mGps.getLongitude()),
+		                        Double.toString(mGps.getLatitude()),
+		                        Float.toString(mCompass.getDegrees()));
 	}
 	
 	@Override
 	public void newLocation() {
+	        
 	      //mMsgHandler.sendMessage(UUID, GPS&DEGREES, VALUES)
 		Log.d("GPSN: ", "Latitude: " + Double.toString(mGps.getLatitude()) + " Longitude: " +  Double.toString(mGps.getLongitude()));
-		mMsgHandler.sendMessage(LOCATION, mCompass.getDegrees() + ";" + mGps.getLatitude());
+		mMsgHandler.sendMessage(Double.toString(mGps.getLongitude()),
+                                Double.toString(mGps.getLatitude()),
+                                Float.toString(mCompass.getDegrees()));
 	}
 	
 	private class MyReceiver extends BroadcastReceiver {

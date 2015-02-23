@@ -37,13 +37,17 @@ public class MessageSender {
 	    	return serverAddress;
 	    }
 	    
+	    public String getUUID() {
+	            return serverUUID.toString();
+	    }
+	    
 		public void setServerPort(String serverPort) {
 			this.serverPort = serverPort;
 		}
 
-		public void sendMessage(String message, String type) {
+		public void sendMessage(String message) {
 			if(checkNetwork()) {
-				new UploadMessageTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, type, message);
+				new UploadMessageTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, message);
 			}
 		}
 
@@ -62,7 +66,8 @@ public class MessageSender {
 			protected Void doInBackground(String ... text) {
 				String msg;
 				// message muotoa UUID,TYPE,MESSAGE
-				msg = serverUUID.toString() + "," + text[0].toString() + "," + text[1].toString();
+				//msg = serverUUID.toString() + "," + text[0].toString() + "," + text[1].toString();
+				msg = "\"sender\": { \"UUID\" : " + serverUUID.toString() + " }," + text[0].toString();
 
 				InetAddress target = null;
 				DatagramSocket socket = null;
@@ -97,9 +102,9 @@ public class MessageSender {
 			}
 		}
 
-		public void handshake() {
-			sendMessage("0", "hs");
-		}
+		//public void handshake() {
+		//	sendMessage("0", "hs");
+		//}
 
 		public String getServerPort() {
 			return serverPort;

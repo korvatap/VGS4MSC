@@ -3,6 +3,7 @@ package fi.oulu.tol.vgs4msc.server;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class MessageReceiver extends Thread {
 	private Context mContext;
 	private UUID serverUUID = null;
 	private String hsMessage;
+	private InetAddress senderAddress = null;
 	
 	public MessageReceiver(Context c, MessageServerObserver obs) {
 		mContext = c;
@@ -46,6 +48,10 @@ public class MessageReceiver extends Thread {
 	
 	public String getHandshakeMessage() {
 		return hsMessage;
+	}
+	
+	public String getSenderAddress() {
+	        return senderAddress.getHostAddress();
 	}
 	
 	public boolean hasMessages() {
@@ -90,6 +96,7 @@ public class MessageReceiver extends Thread {
                     	if(isHandshake(message)) {
                     		hsMessage = message;
                     		proxyObserver.handshakeReceived();
+                    		senderAddress = packet.getAddress();
                     	}
                     } else {
                     	if(checkUUID(message)) {
