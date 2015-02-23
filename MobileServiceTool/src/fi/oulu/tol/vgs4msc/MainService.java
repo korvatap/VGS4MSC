@@ -12,7 +12,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
-public class MainService extends Service implements AreaObserver {
+public class MainService extends Service implements AreaObserver, ConnectionObserver {
 	
 	private final MainServiceBinder binder = new MainServiceBinder();
 	private CompassSensor mCompass;
@@ -25,6 +25,8 @@ public class MainService extends Service implements AreaObserver {
 	private static final String START_SERVICE = "fi.oulu.tol.VGS4MSC.action.START";
 	private static final String NETWORK_INFO = "fi.oulu.tol.VGS4MSC.action.NETWORKINFO";
 	public static final String TAG = "fi.oulu.tol.vgs4msc.MainService";
+	
+	private static final String LOCATION = "1";
 	
 	private String mIpAddress = "127.0.0.1";
 	private String mPort = "27015";
@@ -52,6 +54,7 @@ public class MainService extends Service implements AreaObserver {
         		
                 mLinListener = new CallHandler(this);
         	mMsgHandler = new MSGHandler(this);
+        	mMsgHandler.setConnectionObserver(this);
         	
         	//Give context info to GPS & Compass
         	mGps = new GPSTracker(this);
@@ -61,15 +64,7 @@ public class MainService extends Service implements AreaObserver {
         	mCompass.setObserver(this);
         	
         	mMsgHandler.startServer();
-        	mGps.start();
-        	mCompass.start();
-        	mLinListener.start();
         	
-        	if(mGps.canGetLocation()) {
-        		Log.d("GPS: ", "Latitude: " + Double.toString(mGps.getLatitude()) + " Longitude: " +  Double.toString(mGps.getLongitude()));
-        	} else {
-        		Log.d("GPS: ", "CANNOT BE COMPLETED");
-        	}
 	}
 	
 	@Override
@@ -95,12 +90,14 @@ public class MainService extends Service implements AreaObserver {
 	public void newDegree() {
 	        //mMsgHandler.sendMessage(UUID, GPS&DEGREES, VALUES)
 		Log.d("DEGREES: ", Float.toString(mCompass.getDegrees()));
+		mMsgHandler.sendMessage(LOCATION, mCompass.getDegrees() + ";" + mGps.getLatitude());
 	}
 	
 	@Override
 	public void newLocation() {
 	      //mMsgHandler.sendMessage(UUID, GPS&DEGREES, VALUES)
 		Log.d("GPSN: ", "Latitude: " + Double.toString(mGps.getLatitude()) + " Longitude: " +  Double.toString(mGps.getLongitude()));
+		mMsgHandler.sendMessage(LOCATION, mCompass.getDegrees() + ";" + mGps.getLatitude());
 	}
 	
 	private class MyReceiver extends BroadcastReceiver {
@@ -128,5 +125,18 @@ public class MainService extends Service implements AreaObserver {
         }
 
     }
+
+        @Override
+        public void handshakeReceived() {
+                mGps.start();
+                mCompass.start();
+                mLinListener.start();
+                
+                if(mGps.canGetLocation()) {
+                        Log.d("GPS: ", "Latitude: " + Double.toString(mGps.getLatitude()) + " Longitude: " +  Double.toString(mGps.getLongitude()));
+                } else {
+                        Log.d("GPS: ", "CANNOT BE COMPLETED");
+                }
+        }
 	
 }

@@ -5,6 +5,8 @@ import java.util.Vector;
 import uni.oulu.firstprotocol.FirstprotocolMainActivity;
 import android.content.Context;
 import android.util.Log;
+import fi.oulu.tol.vgs4msc.AreaObserver;
+import fi.oulu.tol.vgs4msc.ConnectionObserver;
 import fi.oulu.tol.vgs4msc.server.MessageReceiver;
 import fi.oulu.tol.vgs4msc.server.MessageSender;
 import fi.oulu.tol.vgs4msc.server.MessageServerObserver;
@@ -15,6 +17,7 @@ public class MSGHandler implements MessageServerObserver {
 	private Vector<String> mMsgList;
 	private Context mContext;
 	private FirstprotocolMainActivity mLedService;
+	private ConnectionObserver cObserver;
 	
 	public MSGHandler(Context context) {
 		mContext = context;
@@ -35,6 +38,14 @@ public class MSGHandler implements MessageServerObserver {
 	public void closeLedService() {
 	        mLedService.stop();
 	}
+	
+	public void setConnectionObserver(ConnectionObserver obs) {
+	        cObserver = obs;
+        }
+        
+        public ConnectionObserver getConnectionObserver(ConnectionObserver obs) {
+                return cObserver;
+        }
 	
 	public void setReceiver(MessageReceiver mr) {
 		mMessageReceiver = mr;
@@ -126,6 +137,7 @@ public class MSGHandler implements MessageServerObserver {
 		
 		mMessageReceiver.setServerUUID(tokens[0]);
 		mMessageSender.setServerUUID(tokens[0]);
+		cObserver.handshakeReceived();
 		
 	}
 	
