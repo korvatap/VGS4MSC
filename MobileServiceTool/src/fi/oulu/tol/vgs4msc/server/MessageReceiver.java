@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.List;
-import java.util.UUID;
 import java.util.Vector;
 
 import android.content.Context;
@@ -20,10 +20,10 @@ public class MessageReceiver extends Thread {
 	private static final String TAG = "fi.oulu.tol.vgs4msc.messagereceiver";
 	private boolean bKeepRunning = true;
 	private List <String> mMsgList;
-	private String serverPort = "27015";
+	private String serverPort = "8080";
 	private MessageServerObserver proxyObserver= null;
 	private Context mContext;
-	private UUID serverUUID = null;
+	private String userid = null;
 	private String hsMessage;
 	private InetAddress senderAddress = null;
 	
@@ -87,19 +87,23 @@ public class MessageReceiver extends Thread {
         
         if(checkNetwork()) {
         	try {
-    			socket = new DatagramSocket(Integer.parseInt(serverPort));
+        	        socket = new DatagramSocket(null);
+        	        socket.setReuseAddress(true);
+        	        socket.setBroadcast(true);
+        	        socket.bind(new InetSocketAddress(Integer.parseInt(serverPort)));
+        	        
 
                 while(bKeepRunning) {
                     socket.receive(packet);
                     message = new String(lmessage, 0, packet.getLength());
-                    if(serverUUID == null) {
+                    if(userid == null) {
                     	if(isHandshake(message)) {
                     		hsMessage = message;
                     		proxyObserver.handshakeReceived();
                     		senderAddress = packet.getAddress();
                     	}
                     } else {
-                    	if(checkUUID(message)) {
+                    	if(checkUserID(message)) {
                             mMsgList.add(message);
                             proxyObserver.messageReceived();
                     	}
@@ -120,10 +124,10 @@ public class MessageReceiver extends Thread {
 
 	}
 	
-	private boolean checkUUID(String message) {
+	private boolean checkUserID(String message) {
 		String tokens[] = message.split(",");
 		
-		if(tokens[0].equals(serverUUID.toString())) {
+		if(tokens[0].equals(userid)) {
 			return true;
 		}
 		return false;
@@ -149,8 +153,8 @@ public class MessageReceiver extends Thread {
 		return serverPort;
 	}
 	
-	public void setServerUUID(String uuid) {
-		serverUUID = UUID.fromString(uuid);
+	public void setUserID(String uid) {
+	        userid = uid;
 	}
 
 }

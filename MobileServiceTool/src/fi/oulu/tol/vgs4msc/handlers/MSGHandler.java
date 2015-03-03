@@ -1,5 +1,6 @@
 package fi.oulu.tol.vgs4msc.handlers;
 
+import java.util.UUID;
 import java.util.Vector;
 
 import org.json.JSONArray;
@@ -22,13 +23,15 @@ public class MSGHandler implements MessageServerObserver {
 	private FirstprotocolMainActivity mLedService;
 	private ConnectionObserver cObserver;
 	public static final String TAG = "fi.oulu.tol.vgs4msc.MSGHandler";
+	private String sipAddress = "";
 	
-	public MSGHandler(Context context) {
+	public MSGHandler(Context context, ConnectionObserver obs) {
 		mContext = context;
-		mMessageReceiver = new MessageReceiver(mContext, this);
 		mMessageSender = new MessageSender(mContext, this);
-		mLedService = new FirstprotocolMainActivity(mContext);
-		mLedService.start();
+		cObserver = obs;
+		setNetwork("kotikolo.linkpc.net", "8080");
+		//mLedService = new FirstprotocolMainActivity(mContext);
+		//mLedService.start();
 	}
 	
 	public void startServer() {
@@ -63,18 +66,21 @@ public class MSGHandler implements MessageServerObserver {
 	          
 	        try {
                         JSONObject message = new JSONObject();
-                        message.put("sender", mMessageSender.getUUID());
+                        message.put("userid", mMessageSender.getUserID());
+                        message.put("latitude", latitude);
+                        message.put("longitude", longitude);
+                        message.put("heading", degrees);
                         
-                        JSONArray jarray = new JSONArray();
-                        JSONObject ob = new JSONObject();
+                       // JSONArray jarray = new JSONArray();
+                       // JSONObject ob = new JSONObject();
                         
-                        ob.put("longitude", longitude);
-                        ob.put("latitude", latitude);
-                        ob.put("degrees", degrees);
+                       // ob.put("longitude", longitude);
+                       // ob.put("latitude", latitude);
+                      //  ob.put("degrees", degrees);
+                       // 
+                      //  jarray.put(ob);
                         
-                        jarray.put(ob);
-                        
-                        message.put("location", jarray);
+                        //message.put("location", jarray);
                                            
                         mMessageSender.sendMessage(message.toString());
                 } catch (JSONException e) {
@@ -99,11 +105,12 @@ public class MSGHandler implements MessageServerObserver {
 			if (tmp != null) {
 			        
 			        try {
+			                Log.d(TAG, tmp);
                                         JSONObject jsonObject = new JSONObject(tmp);
                                         if(jsonObject.has("heading")) {
-                                                if(!mLedService.started()) {
-                                                        mLedService.resume();
-                                                }
+                                               // if(!mLedService.started()) {
+                                               //         mLedService.resume();
+                                              //  }
                                                 // PARSE VALUE FROM MESSAGE
                                                 switch(jsonObject.getString("heading")) {
                                                 
@@ -170,8 +177,8 @@ public class MSGHandler implements MessageServerObserver {
 		String msg = mMessageReceiver.getHandshakeMessage();
 		String tokens[] = msg.split(",");
 		
-		mMessageReceiver.setServerUUID(tokens[0]);
-		mMessageSender.setServerUUID(tokens[0]);
+		mMessageReceiver.setUserID(tokens[0]);
+		mMessageSender.setUserID(tokens[0]);
 		cObserver.handshakeReceived();
 		
 	}
@@ -196,7 +203,30 @@ public class MSGHandler implements MessageServerObserver {
 			mMessageReceiver = new MessageReceiver(mContext, this);
 			mMessageReceiver.setPort(port);
 			startServer();
+			
+			
+			mMessageReceiver.setUserID("1");
+	                mMessageSender.setUserID("1");
+	                
+	                JSONObject message = new JSONObject();
+                        try {
+                                message.put("userid", mMessageSender.getUserID());
+                                message.put("SIP: ", sipAddress);
+                        } catch (JSONException e) {
+                                // TODO Auto-generated catch block
+                               Log.d(TAG, "JSON ERROR" + e.toString());
+                        }
+                                
+                        mMessageSender.sendMessage(message.toString());
+	                
+	                cObserver.handshakeReceived();
+			
 		}
 
 	}
+
+        public void setLinphonAddress(String sipAddress) {
+                this.sipAddress = sipAddress;
+                
+        }
 }

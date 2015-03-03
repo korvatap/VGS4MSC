@@ -91,7 +91,7 @@ final class GPSTracker implements LocationListener {
 		Log.d("GPS Tracker", "onLocationChanged");
 		mLocation = location;
 		
-		mLocationTime = location.getTime();
+		mLocationTime = mLocation.getTime();
 		mLatitude = mLocation.getLatitude();
 		mLongitude = mLocation.getLongitude();
 		

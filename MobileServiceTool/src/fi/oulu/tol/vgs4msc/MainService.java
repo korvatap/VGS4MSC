@@ -19,14 +19,13 @@ public class MainService extends Service implements AreaObserver, ConnectionObse
 	private GPSTracker mGps;
 	private MSGHandler mMsgHandler;
 	private MyReceiver mReceiver;
-	private CallHandler mLinListener;
+	private Thread mLinListener;
+	private boolean handshaked = false;
 	
 	private static final String SHUTDOWN_SERVICE = "fi.oulu.tol.VGS4MSC.action.SHUTDOWN";
 	private static final String START_SERVICE = "fi.oulu.tol.VGS4MSC.action.START";
 	private static final String NETWORK_INFO = "fi.oulu.tol.VGS4MSC.action.NETWORKINFO";
 	public static final String TAG = "fi.oulu.tol.vgs4msc.MainService";
-	
-	private static final String LOCATION = "1";
 	
 	private String mIpAddress = "127.0.0.1";
 	private String mPort = "27015";
@@ -51,19 +50,15 @@ public class MainService extends Service implements AreaObserver, ConnectionObse
                 filter.addAction(SHUTDOWN_SERVICE);
                 filter.addAction(NETWORK_INFO);
                 registerReceiver(mReceiver, filter);	
-        		
-                mLinListener = new CallHandler(this);
-        	mMsgHandler = new MSGHandler(this);
-        	mMsgHandler.setConnectionObserver(this);
         	
-        	//Give context info to GPS & Compass
-        	mGps = new GPSTracker(this);
-        	mCompass = new CompassSensor(this);
+               // mLinListener = new CallHandler(this);
+        	mMsgHandler = new MSGHandler(this, this);
+        	//mLinListener.start();
         	
-        	mGps.setObserver(this);
-        	mCompass.setObserver(this);
-        	
-        	mMsgHandler.startServer();
+        	mLinListener = new Thread(new CallHandler(this));
+        	mLinListener.start();
+
+        	//mMsgHandler.startServer();
         	
 	}
 	
@@ -89,10 +84,14 @@ public class MainService extends Service implements AreaObserver, ConnectionObse
 	@Override
 	public void newDegree() {
 	        //mMsgHandler.sendMessage(UUID, GPS&DEGREES, VALUES)
+	        if(handshaked) {
+                        mMsgHandler.sendMessage(Double.toString(mGps.getLongitude()),
+                                        Double.toString(mGps.getLatitude()),
+                                        Float.toString(mCompass.getDegrees()));
+                }
 		Log.d("DEGREES: ", Float.toString(mCompass.getDegrees()));
-		mMsgHandler.sendMessage(Double.toString(mGps.getLongitude()),
-		                        Double.toString(mGps.getLatitude()),
-		                        Float.toString(mCompass.getDegrees()));
+		
+		
 	}
 	
 	@Override
@@ -100,9 +99,11 @@ public class MainService extends Service implements AreaObserver, ConnectionObse
 	        
 	      //mMsgHandler.sendMessage(UUID, GPS&DEGREES, VALUES)
 		Log.d("GPSN: ", "Latitude: " + Double.toString(mGps.getLatitude()) + " Longitude: " +  Double.toString(mGps.getLongitude()));
-		mMsgHandler.sendMessage(Double.toString(mGps.getLongitude()),
-                                Double.toString(mGps.getLatitude()),
-                                Float.toString(mCompass.getDegrees()));
+		if(handshaked) {
+                        mMsgHandler.sendMessage(Double.toString(mGps.getLongitude()),
+                                        Double.toString(mGps.getLatitude()),
+                                        Float.toString(mCompass.getDegrees()));
+                }
 	}
 	
 	private class MyReceiver extends BroadcastReceiver {
@@ -133,9 +134,19 @@ public class MainService extends Service implements AreaObserver, ConnectionObse
 
         @Override
         public void handshakeReceived() {
+                handshaked = true;
+                
+              //Give context info to GPS & Compass
+                mGps = new GPSTracker(this);
+                mCompass = new CompassSensor(this);
+                
+                mGps.setObserver(this);
+                mCompass.setObserver(this);
+                
                 mGps.start();
                 mCompass.start();
-                mLinListener.start();
+               // mLinListener.start();
+              //  mMsgHandler.setLinphonAddress(mLinListener.getSipAddress());
                 
                 if(mGps.canGetLocation()) {
                         Log.d("GPS: ", "Latitude: " + Double.toString(mGps.getLatitude()) + " Longitude: " +  Double.toString(mGps.getLongitude()));

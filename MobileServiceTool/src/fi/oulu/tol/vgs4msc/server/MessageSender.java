@@ -18,7 +18,7 @@ public class MessageSender {
 
 		private String serverAddress = null;
 		private String serverPort = null;
-		private UUID serverUUID = null;
+		private String userid = null;
 		
 		private MessageServerObserver proxyObserver= null;
 		private Context mContext = null;
@@ -37,8 +37,8 @@ public class MessageSender {
 	    	return serverAddress;
 	    }
 	    
-	    public String getUUID() {
-	            return serverUUID.toString();
+	    public String getUserID() {
+	            return userid;
 	    }
 	    
 		public void setServerPort(String serverPort) {
@@ -67,7 +67,7 @@ public class MessageSender {
 				String msg;
 				// message muotoa UUID,TYPE,MESSAGE
 				//msg = serverUUID.toString() + "," + text[0].toString() + "," + text[1].toString();
-				msg = "\"sender\": { \"UUID\" : " + serverUUID.toString() + " }," + text[0].toString();
+				msg = text[0].toString();
 
 				InetAddress target = null;
 				DatagramSocket socket = null;
@@ -93,6 +93,7 @@ public class MessageSender {
 				try {
 					socket.send(packet);
 					proxyObserver.messageSend();
+
 				} catch (IOException e) {
 					Log.d(TAG, "Message send failed" + e.getStackTrace().toString());
 				}
@@ -102,16 +103,13 @@ public class MessageSender {
 			}
 		}
 
-		//public void handshake() {
-		//	sendMessage("0", "hs");
-		//}
 
 		public String getServerPort() {
 			return serverPort;
 		}
 
-		public void setServerUUID(String uuid) {
-			serverUUID = UUID.fromString(uuid);
+		public void setUserID(String id) {
+		        userid = id;
 		}
 		
 }
