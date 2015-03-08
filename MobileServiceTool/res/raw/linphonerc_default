@@ -20,4 +20,4 @@ host=
 port=443
 
 [misc]
-config-uri=INSERT_URL_TO_CONFIG_TO_TRY_HERE
+config-uri=/data/data/org.linphone/files/linphonerc

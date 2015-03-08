@@ -23,6 +23,7 @@ import org.linphone.core.LinphoneCore.EcCalibratorStatus;
 import org.linphone.core.LinphoneCore.GlobalState;
 import org.linphone.core.LinphoneCore.RegistrationState;
 import org.linphone.core.LinphoneCore.RemoteProvisioningState;
+import org.linphone.core.LinphoneCore.Transports;
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
@@ -171,6 +172,12 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
 				setPupilAsDefault();
 				
 				LinphoneAddress address = lcFactory.createLinphoneAddress(sipAddress);
+				Transports tr = new Transports();
+				tr.tcp = -1;
+				tr.tls = -1;
+				tr.udp = -1;
+				
+				mLc.setSignalingTransportPorts(tr);
 				LinphoneAuthInfo info;
 				LinphoneProxyConfig proxyCfg;
 				String username = address.getUserName();
@@ -191,9 +198,10 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
 
 	                        mLc.setDefaultProxyConfig(proxyCfg);
 				
-				
+				mLc.enableVideo(true, true);
 				mLc.setVideoDevice(currentCameras[currentCameras.length-1].id);
 				mLc.enableSpeaker(true);
+				
 			
 				startIterate();
 				mInstance = this;
@@ -260,7 +268,7 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
 			        
 				Log.i(TAG, "new state: " + cstate.toString());
 				try {
-					lc.acceptCall(call);
+					//lc.acceptCall(call);
 					lc.acceptCallWithParams(call, call.getCurrentParamsCopy());
 					
 				} catch (LinphoneCoreException e) {

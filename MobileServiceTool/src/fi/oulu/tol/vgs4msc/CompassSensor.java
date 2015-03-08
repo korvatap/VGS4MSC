@@ -61,7 +61,8 @@ public class CompassSensor implements SensorEventListener {
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
-	        if((System.currentTimeMillis()-lastTimeStamp) > 3000 || firstTime) {
+	        
+	        if((System.currentTimeMillis()-lastTimeStamp) > 50 || firstTime) {
 	                switch(event.sensor.getType()){
                         case Sensor.TYPE_ACCELEROMETER:
                            for(int i =0; i < 3; i++){

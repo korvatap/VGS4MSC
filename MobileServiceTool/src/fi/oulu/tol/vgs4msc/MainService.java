@@ -89,7 +89,7 @@ public class MainService extends Service implements AreaObserver, ConnectionObse
                                         Double.toString(mGps.getLatitude()),
                                         Float.toString(mCompass.getDegrees()));
                 }
-		Log.d("DEGREES: ", Float.toString(mCompass.getDegrees()));
+		//Log.d("DEGREES: ", Float.toString(mCompass.getDegrees()));
 		
 		
 	}
