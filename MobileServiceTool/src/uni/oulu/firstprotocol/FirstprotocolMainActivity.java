@@ -27,7 +27,7 @@ public class FirstprotocolMainActivity {
     public void start() {
     	if (mBtCommunicator != null)
     		mBtCommunicator.doStart();
-    	        started = true;
+    	        started = true; 
     }
     
     public void resume() {

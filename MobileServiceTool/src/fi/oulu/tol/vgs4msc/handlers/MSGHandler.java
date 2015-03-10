@@ -30,8 +30,8 @@ public class MSGHandler implements MessageServerObserver {
 		mMessageSender = new MessageSender(mContext, this);
 		cObserver = obs;
 		setNetwork("kotikolo.linkpc.net", "8080");
-		//mLedService = new FirstprotocolMainActivity(mContext);
-		//mLedService.start();
+		mLedService = new FirstprotocolMainActivity(mContext);
+		mLedService.start();
 	}
 	
 	public void startServer() {
@@ -100,6 +100,8 @@ public class MSGHandler implements MessageServerObserver {
 	
 	private void processMessages() {
 		String tmp;
+		int [] values = new int[14];
+		
 		while(hasMessages()) {
 			tmp = getLastMessage();
 			if (tmp != null) {
@@ -108,22 +110,59 @@ public class MSGHandler implements MessageServerObserver {
 			                Log.d(TAG, tmp);
                                         JSONObject jsonObject = new JSONObject(tmp);
                                         if(jsonObject.has("heading")) {
-                                               // if(!mLedService.started()) {
-                                               //         mLedService.resume();
-                                              //  }
+                                                if(!mLedService.started()) {
+                                                        mLedService.resume();
+                                                }
                                                 // PARSE VALUE FROM MESSAGE
                                                 switch(jsonObject.getString("heading")) {
                                                 
                                                         case "left":
-                                                                //CREATE lValues
+                                                                values[13] = 2;
                                                         break;
                                                         
                                                         case "right":
-                                                              //CREATE lValues
+                                                                values[6] = 2;
+                                                        break;
+                                                        
+                                                        case "up":
+                                                                values[3] = 2;
+                                                                values[7] = 2;
+                                                        break;
+                                                        
+                                                        case "down":
+                                                                values[1] = 2;
+                                                                values[12] = 2;
+                                                        break;
+                                                        
+                                                        case "left_down":
+                                                                values[13] = 2;
+                                                                values[11] = 2;
+                                                                values[10] = 2;
+                                                        break;
+                                                        
+                                                        case "right_down":
+                                                                values[6] = 2;
+                                                                values[0] = 2;
+                                                                values[2] = 2;
+                                                        break;
+                                                        
+                                                        case "left_up":
+                                                                values[8] = 2;
+                                                                values[9] = 2;
+                                                                values[13] = 2;
+                                                        break;
+                                                        
+                                                        case "right_up":
+                                                                values[4] = 2;
+                                                                values[5] = 2;
+                                                                values[6] = 2;
+                                                        break;
+                                                        
+                                                        default:
                                                         break;
                                                         
                                                 }
-                                                //mLedService.sendDirections(lValues, bright, blkTime, freq);
+                                                mLedService.sendDirections(values, 15, 5, 1);
 
                                         }
                                         

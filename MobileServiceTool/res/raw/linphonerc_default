@@ -9,7 +9,11 @@ use_ipv6=0
 keepalive_period=30000
 
 [video]
+enabled=1
 size=qvga
+display=1
+capture=1
+device= /dev/video3
 
 [app]
 sharing_server=https://www.linphone.org:444/upload.php
@@ -19,5 +23,9 @@ tunnel=disabled
 host=
 port=443
 
-[misc]
-config-uri=/data/data/org.linphone/files/linphonerc
+[video_codec_0]
+mime=VP8
+rate=90000
+enabled=1
+recv_fmtp=packetization-mode=1
+

@@ -387,9 +387,10 @@ public class BluetoothChatService {
             try {
                 // This is a blocking call and will only return on a
                 // successful connection or an exception
+                    
                 mmSocket.connect();
             } catch (IOException e) {
-            	Log.e(TAG, "IOException in connect");
+            	Log.e(TAG, "IOException in connect, " + e.toString());
             	e.printStackTrace();
                 // Close the socket
                 try {

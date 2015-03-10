@@ -23,7 +23,6 @@ import org.linphone.core.LinphoneCore.EcCalibratorStatus;
 import org.linphone.core.LinphoneCore.GlobalState;
 import org.linphone.core.LinphoneCore.RegistrationState;
 import org.linphone.core.LinphoneCore.RemoteProvisioningState;
-import org.linphone.core.LinphoneCore.Transports;
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
@@ -40,6 +39,7 @@ import fi.tol.oulu.vgs4msc.R;
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.Log;
+import android.view.SurfaceView;
 
 public class CallHandler implements LinphoneCoreListener, Runnable  {
 	
@@ -95,8 +95,9 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
                 int camId = 0;
                 AndroidCamera[] cameras = AndroidCameraConfiguration.retrieveCameras();
                 for (AndroidCamera androidCamera : cameras) {
-                        if (androidCamera.frontFacing)
-                                camId = androidCamera.id;
+                        Log.d(TAG, "CID: " + androidCamera.id);
+                        //if (androidCamera.frontFacing
+                               camId = androidCamera.id;
                         }
                 mLc.setVideoDevice(camId);
           }
@@ -132,7 +133,7 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
                 copyIfNotExist(mContext, R.raw.oldphone_mono, basePath + "/oldphone_mono.wav");
                 copyIfNotExist(mContext, R.raw.ringback, basePath + "/ringback.wav");
                 copyIfNotExist(mContext, R.raw.toy_mono, basePath + "/toy_mono.wav");
-                copyIfNotExist(mContext, R.raw.linphonerc_default, basePath + "/.linphonerc");
+                copyFromPackage(mContext, R.raw.linphonerc_default, new File(basePath + "/.linphonerc").getName());
                 copyFromPackage(mContext, R.raw.linphonerc_factory, new File(basePath + "/linphonerc").getName());
                 copyIfNotExist(mContext, R.raw.lpconfig, basePath + "/lpconfig.xsd");
                 copyIfNotExist(mContext, R.raw.rootca, basePath + "/rootca.pem");
@@ -159,25 +160,25 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
         }
 	
 	public void startLin() {
-	        AndroidCamera[] currentCameras = AndroidCameraConfiguration.retrieveCameras();
+	       // AndroidCamera[] currentCameras = AndroidCameraConfiguration.retrieveCameras();
 		try {
 			try {
 			       
 			        String basePath = mContext.getFilesDir().getAbsolutePath();
 			        copyAssetsFromPackage(basePath);
+			        //mLc = LinphoneCoreFactory.instance().createLinphoneCore(this, mContext);
 				mLc = LinphoneCoreFactory.instance().createLinphoneCore(this, basePath + "/.linphonerc", basePath + "/linphonerc", null, mContext);
 				initLinphoneCoreValues(basePath);
-				
 				setUserAgent();
-				setPupilAsDefault();
+				//setPupilAsDefault();
+				
 				
 				LinphoneAddress address = lcFactory.createLinphoneAddress(sipAddress);
-				Transports tr = new Transports();
-				tr.tcp = -1;
-				tr.tls = -1;
-				tr.udp = -1;
 				
-				mLc.setSignalingTransportPorts(tr);
+				mLc.enableVideo(true, true);
+				
+				
+				
 				LinphoneAuthInfo info;
 				LinphoneProxyConfig proxyCfg;
 				String username = address.getUserName();
@@ -197,12 +198,10 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
 				mLc.addProxyConfig(proxyCfg);
 
 	                        mLc.setDefaultProxyConfig(proxyCfg);
+	                        
 				
-				mLc.enableVideo(true, true);
-				mLc.setVideoDevice(currentCameras[currentCameras.length-1].id);
 				mLc.enableSpeaker(true);
 				
-			
 				startIterate();
 				mInstance = this;
 				mLc.setNetworkReachable(true);
@@ -216,6 +215,7 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
 		}
 		
 	}
+	
 	
 	private void startIterate() {
 	        TimerTask lTask = new TimerTask() {
@@ -248,12 +248,13 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
 		LinphoneCallParams params = mLc.createDefaultCallParameters();
 		
 		Log.d(TAG,"Call state: " + cstate + "(" + message + ")");
+	
 		
 		if(cstate == State.IncomingReceived ) {
 			for(String contact : allowedContacts) {
 			        Log.d(TAG, "contact: " + contact + ", remote: " + call.getRemoteAddress().asString());
 				if (call.getRemoteAddress().asString().equals(contact)) {
-				        Log.d(TAG, "GOOD CONTACT");
+				        Log.d(TAG, "GOOD CONTACT!");
 					badCaller = false;
 					break;
 				}
@@ -285,12 +286,23 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
 		        boolean remoteVideo = call.getRemoteParams().getVideoEnabled();
 		        
 		        if(remoteVideo) {
-		                try {
-                                        mLc.deferCallUpdate(call);
-                                } catch (LinphoneCoreException e) {
+		                Log.d(TAG, "REMOTE VIDEOSSS");
+		                call.enableCamera(true);
+		                mLc.getCurrentCall().enableCamera(true);
+
+		               try {
+		                setPupilAsDefault();
+                                mLc.acceptCallUpdate(call, call.getRemoteParams());
+                        } catch (LinphoneCoreException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                        }
+		               // try {
+                                    //    mLc.deferCallUpdate(call);
+                               // } catch (LinphoneCoreException e) {
                                         // TODO Auto-generated catch block
-                                        Log.d(TAG, e.toString());
-                                }
+                               //         e.printStackTrace();
+                               // }
 		        }
 		        
                       

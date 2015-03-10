@@ -19,15 +19,21 @@
 
 package uni.oulu.firstprotocol;
 
+import java.lang.reflect.Method;
 import java.util.Hashtable;
+import java.util.Set;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.widget.ArrayAdapter;
 
 public class HmdBtCommunicator implements HmdCommunicator {
 
@@ -74,10 +80,12 @@ public class HmdBtCommunicator implements HmdCommunicator {
     public static final String DEVICE_NAME = "device_name";
     public static final String TAG = "uni.oulu.firstprotocol";
 
-    private String lgAddress = "abc";
+    private String lgAddress = "00:18:B2:02:51:78";
     
 	private BluetoothAdapter mBluetoothAdapter = null;
 	private BluetoothChatService mChatService = null;
+	
+	private ArrayAdapter<String> mNewDevicesArrayAdapter;
 	
 	private boolean bConnected = false;
 	private long last_data = 0x0;
@@ -108,6 +116,15 @@ public class HmdBtCommunicator implements HmdCommunicator {
 			directions.put( DIR_RIGHT_UP_KEY, new DirectionPattern(DIR_RIGHT_UP_VAL, 0,0,0));
 			directions.put( DIR_NONE_KEY, new DirectionPattern(DIR_NONE_VAL, 0,0,0));
 		}
+	        // Register for broadcasts when a device is discovered
+                IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+                mContext.registerReceiver(mReceiver, filter);
+
+                // Register for broadcasts when discovery has finished
+                filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+                mContext.registerReceiver(mReceiver, filter);
+                
+		mBluetoothAdapter.startDiscovery();
 	}
 	
 	public Hashtable<String,DirectionPattern> getDirections() {
@@ -129,6 +146,7 @@ public class HmdBtCommunicator implements HmdCommunicator {
 	    // Otherwise, setup the chat session
 	    } else {
 	        if (mChatService == null) setupChat();
+	        
 	    }
 	    
 	}
@@ -158,19 +176,71 @@ public class HmdBtCommunicator implements HmdCommunicator {
 	private void setupChat() {
         // Initialize the BluetoothChatService to perform bluetooth connections
         mChatService = new BluetoothChatService(mContext, mHandler);
-        connectDevice();
 
         // Initialize the buffer for outgoing messages
         //mOutStringBuffer = new StringBuffer("");
     }
 	
 	public void connectDevice() {
-                BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(lgAddress);
+	        BluetoothDevice mmDevice = null;
+	        
+	        Set<BluetoothDevice> pairedDevices =  BluetoothAdapter.getDefaultAdapter().getBondedDevices();
+                for (BluetoothDevice device : pairedDevices) {
+                        String name = device.getName();
+                        Log.d(TAG,device.getName());
+                        if (name.contains("HMD")) {
+                            mmDevice = mBluetoothAdapter.getRemoteDevice(device.getAddress());
+                            break;
+                        }
+                }
+                
                 // Attempt to connect to the device
-                Log.d("BTBLOP", "DEVICE:"+device.toString());
-                if (device != null)
-                	mChatService.connect(device, true);
+                
+                if (mmDevice != null) {
+                        Log.d("BTBLOP", "DEVICE:"+mmDevice.toString());
+                	mChatService.connect(mmDevice, false);
+                }
 	}
+	
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+
+                // When discovery finds a device
+                if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                    // Get the BluetoothDevice object from the Intent
+                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                    // If it's already paired, skip it, because it's been listed already
+                    if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                        mNewDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+                        if(device.getName().contains("HMD")) {
+                                try {
+                                        if(createBond(device)) {
+                                                mBluetoothAdapter.cancelDiscovery();
+                                        }
+                                } catch (Exception e) {
+                                        // TODO Auto-generated catch block
+                                        Log.d(TAG, e.toString());
+                                }
+                        }
+                    } 
+                // When discovery is finished, change the Activity title
+                } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                    connectDevice();
+                }
+            }
+        };
+	
+        
+        public boolean createBond(BluetoothDevice btDevice)  
+        throws Exception  
+        { 
+            Class class1 = Class.forName("android.bluetooth.BluetoothDevice");
+            Method createBondMethod = class1.getMethod("createBond");  
+            Boolean returnValue = (Boolean) createBondMethod.invoke(btDevice);  
+            return returnValue.booleanValue();  
+        }  
 	
 	@Override
 	public boolean sendData(long data) {
