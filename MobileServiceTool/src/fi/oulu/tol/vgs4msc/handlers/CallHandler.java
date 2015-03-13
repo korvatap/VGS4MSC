@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
-
 import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneAuthInfo;
 import org.linphone.core.LinphoneCall;
@@ -39,7 +38,6 @@ import fi.tol.oulu.vgs4msc.R;
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.Log;
-import android.view.SurfaceView;
 
 public class CallHandler implements LinphoneCoreListener, Runnable  {
 	
@@ -54,12 +52,16 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
 	private static CallHandler mInstance;
 	private Timer mTimer;
 	
+	private boolean shouldRun = true;
+	
 	public CallHandler(Context context) {
+                
 		mContext = context;
 		allowedContacts.add("sip:korvatap@sip.linphone.org");
 		allowedContacts.add("sip:Emnu@sip.linphone.org");
 		allowedContacts.add("sip:geldan2@sip.linphone.org");
 		LinphoneCoreFactory.instance().setDebugMode(true, "Linphone Listener");
+		
 		/*LinphoneCoreFactory.instance().setDebugMode(true, "Linphone Listener");
 		try {
 		        String basePath = mContext.getFilesDir().getAbsolutePath();
@@ -133,7 +135,7 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
                 copyIfNotExist(mContext, R.raw.oldphone_mono, basePath + "/oldphone_mono.wav");
                 copyIfNotExist(mContext, R.raw.ringback, basePath + "/ringback.wav");
                 copyIfNotExist(mContext, R.raw.toy_mono, basePath + "/toy_mono.wav");
-                copyFromPackage(mContext, R.raw.linphonerc_default, new File(basePath + "/.linphonerc").getName());
+                copyFromPackage(mContext, R.raw.linphonerc_default, new File(basePath + "/.linphonercc").getName());
                 copyFromPackage(mContext, R.raw.linphonerc_factory, new File(basePath + "/linphonerc").getName());
                 copyIfNotExist(mContext, R.raw.lpconfig, basePath + "/lpconfig.xsd");
                 copyIfNotExist(mContext, R.raw.rootca, basePath + "/rootca.pem");
@@ -167,7 +169,7 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
 			        String basePath = mContext.getFilesDir().getAbsolutePath();
 			        copyAssetsFromPackage(basePath);
 			        //mLc = LinphoneCoreFactory.instance().createLinphoneCore(this, mContext);
-				mLc = LinphoneCoreFactory.instance().createLinphoneCore(this, basePath + "/.linphonerc", basePath + "/linphonerc", null, mContext);
+				mLc = LinphoneCoreFactory.instance().createLinphoneCore(this, basePath + "/.linphonercc", basePath + "/linphonerc", null, mContext);
 				initLinphoneCoreValues(basePath);
 				setUserAgent();
 				//setPupilAsDefault();
@@ -216,17 +218,24 @@ public class CallHandler implements LinphoneCoreListener, Runnable  {
 		
 	}
 	
+	public void shutdown() {
+	        shouldRun = false;
+	}
+	
 	
 	private void startIterate() {
-	        TimerTask lTask = new TimerTask() {
-        	        @Override
-        	        public void run() {
-        	                mLc.iterate();
-        	        }
-        	};
-	        /*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
-	        mTimer = new Timer("Linphone scheduler");
-	        mTimer.schedule(lTask, 0, 20);
+	        if(shouldRun) {
+	                TimerTask lTask = new TimerTask() {
+	                        @Override
+	                        public void run() {
+	                                mLc.iterate();
+	                        }
+	                };
+	                /*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
+	                mTimer = new Timer("Linphone scheduler");
+	                mTimer.schedule(lTask, 0, 20);
+	        }
+	        
 	}
 	
 	public void destroy() {

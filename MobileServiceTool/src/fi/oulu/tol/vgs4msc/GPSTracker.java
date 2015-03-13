@@ -164,6 +164,7 @@ final class GPSTracker implements LocationListener {
         			if(mLocation != null) {
         				mLatitude = mLocation.getLatitude();
         				mLongitude = mLocation.getLongitude();
+        				mCurrentProvider = LocationManager.GPS_PROVIDER;
         			}
         		}
         	} else if (wifiEnabled()) {
@@ -178,6 +179,7 @@ final class GPSTracker implements LocationListener {
         			if(mLocation != null) {
         				mLatitude = mLocation.getLatitude();
         				mLongitude = mLocation.getLongitude();
+        				mCurrentProvider = LocationManager.PASSIVE_PROVIDER;
         			}
         		}
         	} else if (mobileEnabled()) {
@@ -192,6 +194,7 @@ final class GPSTracker implements LocationListener {
         			if(mLocation != null) {
         				mLatitude = mLocation.getLatitude();
         				mLongitude = mLocation.getLongitude();
+        				mCurrentProvider = LocationManager.NETWORK_PROVIDER;
         			}
         		}
         	}

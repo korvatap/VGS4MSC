@@ -28,6 +28,7 @@
 		android:allowBackup="true"
 		android:icon="@drawable/ic_launcher"
 		android:label="@string/app_name"
+		android:persistent="true"
 		android:theme="@style/AppTheme" >
 		
 		<receiver android:enabled="true" android:name=".BootReceiver"
@@ -50,7 +51,8 @@
 			</intent-filter>
 		</activity>
 		<service android:name="fi.oulu.tol.vgs4msc.MainService"></service>
-		<service android:name="fi.oulu.tol.vgs4msc.CompassSensor"></service>   
+		<service android:name="fi.oulu.tol.vgs4msc.CompassSensor"></service>
+		<service android:name="com.ford.openxc.webcam.WebcamManager"></service> 
 	</application>
 
 </manifest>

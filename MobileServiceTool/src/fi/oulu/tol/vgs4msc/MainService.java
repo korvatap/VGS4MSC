@@ -52,14 +52,13 @@ public class MainService extends Service implements AreaObserver, ConnectionObse
                 registerReceiver(mReceiver, filter);	
         	
                // mLinListener = new CallHandler(this);
+                mLinListener = new Thread(new CallHandler(this));
         	mMsgHandler = new MSGHandler(this, this);
         	//mLinListener.start();
         	
-        	mLinListener = new Thread(new CallHandler(this));
-        	mLinListener.start();
-
-        	//mMsgHandler.startServer();
         	
+        	//mLinListener.start();
+        	///
 	}
 	
 	@Override
@@ -143,16 +142,19 @@ public class MainService extends Service implements AreaObserver, ConnectionObse
                 mGps.setObserver(this);
                 mCompass.setObserver(this);
                 
+                Log.d(TAG, "Starting GPS");
                 mGps.start();
+                Log.d(TAG, "Starting compass");
                 mCompass.start();
-               // mLinListener.start();
-              //  mMsgHandler.setLinphonAddress(mLinListener.getSipAddress());
+                Log.d(TAG, "Starting Linphone listener");
+                mLinListener.start();
+               // mMsgHandler.setLinphonAddress(mLinListener.ge));
                 
-                if(mGps.canGetLocation()) {
-                        Log.d("GPS: ", "Latitude: " + Double.toString(mGps.getLatitude()) + " Longitude: " +  Double.toString(mGps.getLongitude()));
-                } else {
-                        Log.d("GPS: ", "CANNOT BE COMPLETED");
-                }
+               // if(mGps.canGetLocation()) {
+                //        Log.d("GPS: ", "Latitude: " + Double.toString(mGps.getLatitude()) + " Longitude: " +  Double.toString(mGps.getLongitude()));
+                //} else {
+                //        Log.d("GPS: ", "CANNOT BE COMPLETED");
+               // }
         }
 	
 }

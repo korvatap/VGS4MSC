@@ -81,6 +81,7 @@ public class HmdBtCommunicator implements HmdCommunicator {
     public static final String TAG = "uni.oulu.firstprotocol";
 
     private String lgAddress = "00:18:B2:02:51:78";
+    private boolean paired = false;
     
 	private BluetoothAdapter mBluetoothAdapter = null;
 	private BluetoothChatService mChatService = null;
@@ -217,6 +218,7 @@ public class HmdBtCommunicator implements HmdCommunicator {
                         if(device.getName().contains("HMD")) {
                                 try {
                                         if(createBond(device)) {
+                                                paired = true;
                                                 mBluetoothAdapter.cancelDiscovery();
                                         }
                                 } catch (Exception e) {
@@ -224,10 +226,15 @@ public class HmdBtCommunicator implements HmdCommunicator {
                                         Log.d(TAG, e.toString());
                                 }
                         }
-                    } 
+                    } else {
+                            paired = true;
+                    }
                 // When discovery is finished, change the Activity title
                 } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                    connectDevice();
+                    if(paired) {
+                            connectDevice();  
+                    }
+                            
                 }
             }
         };

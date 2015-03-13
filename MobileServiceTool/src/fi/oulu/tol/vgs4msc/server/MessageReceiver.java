@@ -16,7 +16,7 @@ import android.util.Log;
 
 public class MessageReceiver extends Thread {
 
-	private static final int MAX_UDP_DATAGRAM_LEN = 65535;
+	private static final int MAX_UDP_DATAGRAM_LEN = 1500;
 	private static final String TAG = "fi.oulu.tol.vgs4msc.messagereceiver";
 	private boolean bKeepRunning = true;
 	private List <String> mMsgList;
@@ -80,47 +80,52 @@ public class MessageReceiver extends Thread {
     }
 	
 	public void run () {
-        String message;
-        byte[] lmessage = new byte[MAX_UDP_DATAGRAM_LEN];
-        DatagramPacket packet = new DatagramPacket(lmessage, lmessage.length);
-        DatagramSocket socket = null;
+        	
+                String message;
+                byte[] lmessage = new byte[MAX_UDP_DATAGRAM_LEN];
+                DatagramPacket packet = new DatagramPacket(lmessage, lmessage.length);
+                DatagramSocket socket = null;
+                Log.i(TAG, "Starting msg receiver");
+                
+                if(checkNetwork()) {
+                	try {
+                	        socket = new DatagramSocket(Integer.parseInt(serverPort));
+                	        //socket.setReuseAddress(true);
+                	       // socket.setBroadcast(true);
+                	        
         
-        if(checkNetwork()) {
-        	try {
-        	        socket = new DatagramSocket(null);
-        	        socket.setReuseAddress(true);
-        	        socket.setBroadcast(true);
-        	        socket.bind(new InetSocketAddress(Integer.parseInt(serverPort)));
-        	        
-
-                while(bKeepRunning) {
-                    socket.receive(packet);
-                    message = new String(lmessage, 0, packet.getLength());
-                    if(userid == null) {
-                    	if(isHandshake(message)) {
-                    		hsMessage = message;
-                    		proxyObserver.handshakeReceived();
-                    		senderAddress = packet.getAddress();
-                    	}
-                    } else {
-                    	if(checkUserID(message)) {
-                            mMsgList.add(message);
-                            proxyObserver.messageReceived();
-                    	}
+                                while(bKeepRunning) {
+                                    Log.i(TAG, "Msg receiver receiving packagess");
+                                    socket.receive(packet);
+                                    Log.i(TAG, "Msg receiver receiving asd");
+                                    message = new String(lmessage, 0, packet.getLength());
+                                    Log.d(TAG, message);
+                                    if(userid == null) {
+                                    	if(isHandshake(message)) {
+                                    		hsMessage = message;
+                                    		proxyObserver.handshakeReceived();
+                                    		senderAddress = packet.getAddress();
+                                    	}
+                                    } else {
+                                    	if(checkUserID(message)) {
+                                            mMsgList.add(message);
+                                            proxyObserver.messageReceived();
+                                    	}
+                                    }
+                                }
+                                
+                    } catch (SocketException  e) {
+                        Log.d(TAG, "UDP SocketException error",e);
+                    }
+                	
+                	catch (IOException d) {
+                		Log.d(TAG, "UDP IOException error" + d.getStackTrace().toString());
+                	}
+        
+                    if (socket != null) {
+                        socket.close();
                     }
                 }
-            } catch (SocketException  e) {
-                Log.d(TAG, "UDP SocketException error",e);
-            }
-        	
-        	catch (IOException d) {
-        		Log.d(TAG, "UDP IOException error" + d.getStackTrace().toString());
-        	}
-
-            if (socket != null) {
-                socket.close();
-            }
-        }
 
 	}
 	

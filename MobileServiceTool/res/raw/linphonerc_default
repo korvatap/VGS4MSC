@@ -13,12 +13,12 @@ enabled=1
 size=qvga
 display=1
 capture=1
-device= /dev/video3
+device=V4L2: /dev/video3
 
 [app]
 sharing_server=https://www.linphone.org:444/upload.php
 tunnel=disabled
-
+ 
 [tunnel]
 host=
 port=443

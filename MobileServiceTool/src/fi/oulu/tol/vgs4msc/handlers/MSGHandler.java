@@ -1,9 +1,7 @@
 package fi.oulu.tol.vgs4msc.handlers;
 
-import java.util.UUID;
 import java.util.Vector;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -11,14 +9,12 @@ import uni.oulu.firstprotocol.FirstprotocolMainActivity;
 import android.content.Context;
 import android.util.Log;
 import fi.oulu.tol.vgs4msc.ConnectionObserver;
-import fi.oulu.tol.vgs4msc.server.MessageReceiver;
-import fi.oulu.tol.vgs4msc.server.MessageSender;
+import fi.oulu.tol.vgs4msc.server.MessageServer;
 import fi.oulu.tol.vgs4msc.server.MessageServerObserver;
 
 public class MSGHandler implements MessageServerObserver {
-	private MessageReceiver mMessageReceiver;
-	private MessageSender mMessageSender;
-	private Vector<String> mMsgList;
+	private MessageServer mMessageServer;
+	private Vector<String> mMsgList = new Vector<String>();
 	private Context mContext;
 	private FirstprotocolMainActivity mLedService;
 	private ConnectionObserver cObserver;
@@ -27,19 +23,26 @@ public class MSGHandler implements MessageServerObserver {
 	
 	public MSGHandler(Context context, ConnectionObserver obs) {
 		mContext = context;
-		mMessageSender = new MessageSender(mContext, this);
 		cObserver = obs;
-		setNetwork("kotikolo.linkpc.net", "8080");
+		mMessageServer = new MessageServer(mContext, this);
+		handShake();
+		mMessageServer.start();
+		//setNetwork("kotikolo.linkpc.net", "8080");
+		
+		//mMessageSender = new MessageSender(mContext, this);
+		
 		mLedService = new FirstprotocolMainActivity(mContext);
 		mLedService.start();
 	}
 	
 	public void startServer() {
-		mMessageReceiver.start();
+		//mMessageReceiver.start();
+	        mMessageServer.start();
 	}
 	
 	public void closeServer() {
-		mMessageReceiver.kill();
+		//mMessageReceiver.kill();
+		mMessageServer.kill();
 	}
 	
 	public void closeLedService() {
@@ -54,19 +57,11 @@ public class MSGHandler implements MessageServerObserver {
                 return cObserver;
         }
 	
-	public void setReceiver(MessageReceiver mr) {
-		mMessageReceiver = mr;
-	}
-	
-	public void setSender(MessageSender ms) {
-		mMessageSender = ms;
-	}
-	
 	public void sendMessage(String longitude, String latitude, String degrees) {
 	          
 	        try {
                         JSONObject message = new JSONObject();
-                        message.put("userid", mMessageSender.getUserID());
+                        message.put("userid", mMessageServer.getUserID());
                         message.put("latitude", latitude);
                         message.put("longitude", longitude);
                         message.put("heading", degrees);
@@ -82,7 +77,7 @@ public class MSGHandler implements MessageServerObserver {
                         
                         //message.put("location", jarray);
                                            
-                        mMessageSender.sendMessage(message.toString());
+                        mMessageServer.sendMessage(message.toString());
                 } catch (JSONException e) {
                         // TODO Auto-generated catch block
                         Log.d(TAG, e.toString());
@@ -91,9 +86,13 @@ public class MSGHandler implements MessageServerObserver {
 
 	@Override
 	public void messageReceived() {
-		while(mMessageReceiver.hasMessages()) {
-			mMsgList.add(mMessageReceiver.getLastMessage());
+	        Log.d(TAG, "MessageReceived");
+		while(mMessageServer.hasMessages()) {
+		        String tmp = mMessageServer.getLastMessage();
+		        if(tmp!=null)
+		                mMsgList.add(tmp);
 		}
+		Log.d(TAG, "Processing messages");
 		processMessages();
 	}
 	
@@ -102,6 +101,7 @@ public class MSGHandler implements MessageServerObserver {
 		String tmp;
 		int [] values = new int[14];
 		
+		Log.d(TAG, "Processing messages");
 		while(hasMessages()) {
 			tmp = getLastMessage();
 			if (tmp != null) {
@@ -116,11 +116,18 @@ public class MSGHandler implements MessageServerObserver {
                                                 // PARSE VALUE FROM MESSAGE
                                                 switch(jsonObject.getString("heading")) {
                                                 
-                                                        case "left":
-                                                                values[13] = 2;
+                                                        case "stop":
+                                                                Log.d(TAG, "Setting values for led machine");
+                                                                for(int i =0; i < values.length; i++) {
+                                                                        values[i] = 1;
+                                                                }
                                                         break;
                                                         
                                                         case "right":
+                                                                values[13] = 2;
+                                                        break;
+                                                        
+                                                        case "left":
                                                                 values[6] = 2;
                                                         break;
                                                         
@@ -134,25 +141,25 @@ public class MSGHandler implements MessageServerObserver {
                                                                 values[12] = 2;
                                                         break;
                                                         
-                                                        case "left_down":
+                                                        case "right_down":
                                                                 values[13] = 2;
                                                                 values[11] = 2;
                                                                 values[10] = 2;
                                                         break;
                                                         
-                                                        case "right_down":
+                                                        case "left_down":
                                                                 values[6] = 2;
                                                                 values[0] = 2;
                                                                 values[2] = 2;
                                                         break;
                                                         
-                                                        case "left_up":
+                                                        case "right_up":
                                                                 values[8] = 2;
                                                                 values[9] = 2;
                                                                 values[13] = 2;
                                                         break;
                                                         
-                                                        case "right_up":
+                                                        case "left_up":
                                                                 values[4] = 2;
                                                                 values[5] = 2;
                                                                 values[6] = 2;
@@ -162,6 +169,7 @@ public class MSGHandler implements MessageServerObserver {
                                                         break;
                                                         
                                                 }
+                                                Log.d(TAG, "sending values for led machine");
                                                 mLedService.sendDirections(values, 15, 5, 1);
 
                                         }
@@ -191,7 +199,7 @@ public class MSGHandler implements MessageServerObserver {
 	}
 
 	public void messageToSend(String type, String message) {
-		mMessageSender.sendMessage(message);
+	        mMessageServer.sendMessage(message);
 	}
 
 	@Override
@@ -213,11 +221,11 @@ public class MSGHandler implements MessageServerObserver {
 
 	@Override
 	public void handshakeReceived() {
-		String msg = mMessageReceiver.getHandshakeMessage();
+		String msg = mMessageServer.getHandshakeMessage();
 		String tokens[] = msg.split(",");
 		
-		mMessageReceiver.setUserID(tokens[0]);
-		mMessageSender.setUserID(tokens[0]);
+		mMessageServer.setUserID(tokens[0]);
+		//mMessageSender.setUserID(tokens[0]);
 		cObserver.handshakeReceived();
 		
 	}
@@ -228,41 +236,59 @@ public class MSGHandler implements MessageServerObserver {
 		}
 		return false;
 	}
-
-	public void setNetwork(String mIpAddress, String mPort) {
-		Log.d("TESTING", mIpAddress + mPort);
-		mMessageSender.setServerAddress(mIpAddress);
-		mMessageSender.setServerPort(mPort);
-		
-		newPort(mPort);
-	}
 	
-	public void newPort(String port) {
-		if(mContext != null) {
-			mMessageReceiver = new MessageReceiver(mContext, this);
-			mMessageReceiver.setPort(port);
-			startServer();
-			
-			
-			mMessageReceiver.setUserID("1");
-	                mMessageSender.setUserID("1");
-	                
-	                JSONObject message = new JSONObject();
+	public void setNetwork(String mIpAddress, String mPort) {
+	        Log.d("TESTING", mIpAddress + mPort);
+                
+                if(mContext != null) {
+                        mMessageServer = new MessageServer(mContext, this);
+                        mMessageServer.setAddress(mIpAddress);
+                        mMessageServer.setPort(mPort);
+                        startServer();
+                        
+                        
+                        mMessageServer.setUserID("1");
+                       // mMessageSender.setUserID("1");
+                        
+                        JSONObject message = new JSONObject();
                         try {
-                                message.put("userid", mMessageSender.getUserID());
+                               // message.put("userid", mMessageSender.getUserI());
+                                message.put("userid", mMessageServer.getUserID());
                                 message.put("SIP: ", sipAddress);
                         } catch (JSONException e) {
                                 // TODO Auto-generated catch block
                                Log.d(TAG, "JSON ERROR" + e.toString());
                         }
                                 
-                        mMessageSender.sendMessage(message.toString());
-	                
-	                cObserver.handshakeReceived();
-			
-		}
-
+                        //mMessageSender.sendMessage(message.toString());
+                        mMessageServer.sendMessage(message.toString()); 
+                        
+                        cObserver.handshakeReceived(); 
+                }
 	}
+	
+	       public void handShake() {
+	              
+	                if(mContext != null) {
+	                        mMessageServer.setUserID("1");
+	                       // mMessageSender.setUserID("1");
+	                        
+	                        JSONObject message = new JSONObject();
+	                        try {
+	                               // message.put("userid", mMessageSender.getUserID());
+	                                message.put("userid", mMessageServer.getUserID());
+	                                message.put("SIP: ", sipAddress);
+	                        } catch (JSONException e) {
+	                                // TODO Auto-generated catch block
+	                               Log.d(TAG, "JSON ERROR" + e.toString());
+	                        }
+	                                
+	                        //mMessageSender.sendMessage(message.toString());
+	                        mMessageServer.sendMessage(message.toString()); 
+	                        
+	                        cObserver.handshakeReceived(); 
+	                }
+	        }
 
         public void setLinphonAddress(String sipAddress) {
                 this.sipAddress = sipAddress;

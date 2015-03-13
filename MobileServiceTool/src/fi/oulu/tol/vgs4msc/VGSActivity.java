@@ -24,6 +24,9 @@ public class VGSActivity extends Activity {
 		   
 		   Intent intent = new Intent(this, MainService.class);
 		   startService(intent);
+		   
+		  // Intent intent2 = new Intent(this, com.ford.openxc.webcam.WebcamManager.class);
+                 //  startService(intent2);
 		   Log.d("ACTIVITY", "STARTSERVICE CALLED" + intent.getClass());
 		   finish();
 	}
